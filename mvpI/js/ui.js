@@ -56,20 +56,73 @@ const UI = (function () {
     root.appendChild(el("h2", { text: "Your chart" }));
     root.appendChild(chartCard(s.me.name || "You", chart, hs, true));
 
+    root.appendChild(el("h2", { text: "Viewing my chart" }));
+    root.appendChild(strengthsWeaknessesCard(chart));
+
     const startBtn = el("button", {
       class: "primary-btn",
       type: "button",
-      text: s.cycle.completedDays.length > 0 || s.cycle.startedAtISO ? "Go to my 21-day cycle" : "Start my 21-day cycle"
+      text: s.cycle.completedDays.length > 0 || s.cycle.startedAtISO ? "Go to my 21-day journey" : "Start my 21-day journey"
     });
     startBtn.addEventListener("click", () => location.hash = "#cycle");
     root.appendChild(startBtn);
   }
 
+  // A same-chart preview of the 21-day cycle's own gift/cost pairing —
+  // every "weakness" here is generated from, and shown next to, the exact
+  // strength it belongs to (product description §3's structural rule).
+  function strengthsWeaknessesCard(chart) {
+    const wrap = el("div", { class: "card" });
+    if (chart.unknownTime) {
+      wrap.appendChild(
+        el("p", { class: "small-note", text: "Strengths and weaknesses use house placements where available; with an unknown birth time, these are based on sign alone." })
+      );
+    }
+    const cols = el("div", { class: "sw-columns" });
+    const strengths = el("div", { class: "sw-col" });
+    strengths.appendChild(el("h4", { class: "sw-heading strength", text: "Strengths" }));
+    const weaknesses = el("div", { class: "sw-col" });
+    weaknesses.appendChild(el("h4", { class: "sw-heading cost", text: "The cost of each" }));
+
+    CONTENT.WEEK_BODIES.forEach((body) => {
+      const p = chart.positions[body];
+      if (!p) return;
+      const sign = ASTRO.signOf(p.lon);
+      const giftText = CONTENT.dayContent("gift", body, sign, p.house);
+      const costText = CONTENT.dayContent("cost", body, sign, p.house);
+      strengths.appendChild(
+        el("div", { class: "sw-item" }, [el("span", { class: "sw-body", text: body + ": " }), document.createTextNode(giftText)])
+      );
+      weaknesses.appendChild(
+        el("div", { class: "sw-item" }, [el("span", { class: "sw-body", text: body + ": " }), document.createTextNode(costText)])
+      );
+    });
+
+    cols.appendChild(strengths);
+    cols.appendChild(weaknesses);
+    wrap.appendChild(cols);
+    wrap.appendChild(
+      el("p", { class: "small-note", text: "Every item on the right is the specific cost of the matching item on the left — never a separate list of flaws." })
+    );
+    return wrap;
+  }
+
+  function labeledField(labelText, hint, inputEls) {
+    const group = el("div", { class: "field-group" });
+    group.appendChild(el("label", { class: "field-label", text: labelText }));
+    group.appendChild(el("div", { class: "field-row" }, inputEls));
+    if (hint) group.appendChild(el("div", { class: "field-hint", text: hint }));
+    return group;
+  }
+
   function birthForm(onSubmit, title, submitLabel) {
     const wrap = el("div", { class: "card form-card" });
     wrap.appendChild(el("h3", { text: title }));
+    wrap.appendChild(
+      el("p", { class: "small-note", text: "Fill in each field below — your own birth details, exactly as you'd enter them for any birth chart calculator." })
+    );
 
-    const nameInput = el("input", { type: "text", placeholder: "Name (just for display)" });
+    const nameInput = el("input", { type: "text", placeholder: "e.g. Lindsey" });
     const dateInput = el("input", { type: "date" });
     const timeInput = el("input", { type: "time" });
     const unknownCheck = el("input", { type: "checkbox", id: "unknown-time-" + Math.random().toString(36).slice(2) });
@@ -78,7 +131,7 @@ const UI = (function () {
       document.createTextNode(" I don't know the exact birth time")
     ]);
 
-    const placeSearch = el("input", { type: "text", placeholder: "Search a city (or enter manually below)" });
+    const placeSearch = el("input", { type: "text", placeholder: "e.g. Berlin, or Zhuhai" });
     const placeResults = el("div", { class: "place-results" });
     let selectedPlace = null;
 
@@ -99,9 +152,9 @@ const UI = (function () {
       });
     });
 
-    const latInput = el("input", { type: "number", step: "0.0001", placeholder: "Latitude" });
-    const lonInput = el("input", { type: "number", step: "0.0001", placeholder: "Longitude" });
-    const zoneInput = el("input", { type: "text", placeholder: "IANA timezone, e.g. Asia/Shanghai" });
+    const latInput = el("input", { type: "number", step: "0.0001", placeholder: "e.g. 52.5200" });
+    const lonInput = el("input", { type: "number", step: "0.0001", placeholder: "e.g. 13.4050" });
+    const zoneInput = el("input", { type: "text", placeholder: "e.g. Asia/Shanghai" });
 
     timeInput.disabled = false;
     unknownCheck.addEventListener("change", () => {
@@ -135,13 +188,16 @@ const UI = (function () {
       });
     });
 
-    wrap.appendChild(el("div", { class: "field-row" }, [nameInput]));
-    wrap.appendChild(el("div", { class: "field-row" }, [dateInput, timeInput]));
-    wrap.appendChild(el("div", { class: "field-row" }, [unknownLabel]));
-    wrap.appendChild(el("div", { class: "field-row" }, [placeSearch]));
+    wrap.appendChild(labeledField("Name", null, [nameInput]));
+    wrap.appendChild(labeledField("Date of birth", null, [dateInput]));
+    const timeGroup = labeledField("Time of birth", "As exact as you have it — even a rough guess is better than nothing, or check the box if it's genuinely unknown.", [timeInput]);
+    timeGroup.appendChild(el("div", { class: "field-row" }, [unknownLabel]));
+    wrap.appendChild(timeGroup);
+    wrap.appendChild(labeledField("Place of birth", "Search for a city, or fill in the exact coordinates and timezone below.", [placeSearch]));
     wrap.appendChild(placeResults);
-    wrap.appendChild(el("div", { class: "field-row small-note", text: "Manual entry (used automatically once filled in):" }));
-    wrap.appendChild(el("div", { class: "field-row" }, [latInput, lonInput, zoneInput]));
+    wrap.appendChild(
+      labeledField("Manual coordinates (optional)", "Only needed if your city didn't come up in the search above.", [latInput, lonInput, zoneInput])
+    );
     wrap.appendChild(error);
     wrap.appendChild(submit);
     return wrap;
@@ -244,13 +300,13 @@ const UI = (function () {
     const week = weekOf(day);
     const hs = getHouseSystemPref();
 
-    root.appendChild(el("h2", { text: "21-Day Cycle — Cycle " + s.cycle.number }));
+    root.appendChild(el("h2", { text: "21-Day Journey — Journey " + s.cycle.number }));
     root.appendChild(
-      el("div", { class: "progress-note", text: s.cycle.completedDays.length + " of 21 days complete. Missing a day never resets your cycle — come back whenever." })
+      el("div", { class: "progress-note", text: s.cycle.completedDays.length + " of 21 days complete. Missing a day never resets your journey — come back whenever." })
     );
 
     if (day > 21) {
-      root.appendChild(el("div", { class: "notice", text: "You've completed this cycle. Head to the Galaxy tab to repeat it." }));
+      root.appendChild(el("div", { class: "notice", text: "You've completed this journey. Head to the Galaxy tab to repeat it." }));
       return;
     }
 
@@ -468,10 +524,10 @@ const UI = (function () {
 
     stars.forEach((st) => root.appendChild(chartCard(st.name, st.chart, hs, false)));
 
-    root.appendChild(el("h3", { text: "Repeat the cycle" }));
+    root.appendChild(el("h3", { text: "Repeat the journey" }));
     root.appendChild(
       el("div", { class: "card-actions" }, [
-        el("button", { type: "button", text: "Same people, new cycle", onclick: () => { STORE.repeatCycle("same"); renderAll(); location.hash = "#cycle"; } }),
+        el("button", { type: "button", text: "Same people, new journey", onclick: () => { STORE.repeatCycle("same"); renderAll(); location.hash = "#cycle"; } }),
         el("button", { type: "button", text: "New circle", onclick: () => { STORE.repeatCycle("new-circle"); renderAll(); location.hash = "#people"; } }),
         el("button", { type: "button", text: "Solo again", onclick: () => { STORE.repeatCycle("new-circle"); renderAll(); location.hash = "#cycle"; } })
       ])
@@ -498,7 +554,7 @@ const UI = (function () {
     );
     const btn = el("button", { class: "primary-btn danger", type: "button", text: "Delete everything" });
     btn.addEventListener("click", () => {
-      if (confirm("This permanently deletes your chart, cycle progress, and everyone added. Continue?")) {
+      if (confirm("This permanently deletes your chart, journey progress, and everyone added. Continue?")) {
         STORE.deleteEverything();
         renderAll();
         location.hash = "#chart";

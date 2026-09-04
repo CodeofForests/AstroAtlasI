@@ -118,6 +118,24 @@ const PLANNED = [
 const COMPLETED = [
   {
     date: "2026-09-04",
+    title: "Chart tab: clearer input fields, strengths/weaknesses summary, Milky Way background",
+    desc:
+      "Three requests from chat, done together: (1) added visible labels and example " +
+      "placeholder text to every birth-data field (Name, Date of birth, Time of birth, Place " +
+      "of birth, Manual coordinates), replacing the old bare inputs; (2) added a \"Viewing my " +
+      "chart\" section below the chart card with a Strengths / Cost-of-each two-column list, " +
+      "generated from the same gift/cost content used in the 21-day journey — every cost item " +
+      "sits next to the exact strength it belongs to, so the user journey is now: enter data " +
+      "→ see chart → see strengths/weaknesses → \"Go to my 21-day journey\"; (3) renamed all " +
+      "user-facing \"cycle\" wording to \"journey\" per the follow-up message (tab label, " +
+      "headings, buttons, progress text) — internal routing/storage keys (#cycle, STORE.cycle) " +
+      "left unchanged since they're not user-visible. Also added a CSS-only Milky Way " +
+      "background (layered star dots + a soft blurred diagonal nebula band) across the whole " +
+      "app, no external image dependency.",
+    dest: { tab: "chart", subtab: null, scrollTo: null }
+  },
+  {
+    date: "2026-09-04",
     title: "Build the first clickable MVP (chart engine + 21-day cycle)",
     desc:
       "Built the full release-plan §11 loop as a clickable prototype: chart calculation " +
