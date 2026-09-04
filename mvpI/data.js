@@ -118,6 +118,24 @@ const PLANNED = [
 const COMPLETED = [
   {
     date: "2026-09-04",
+    title: "Visualize the chart as an SVG wheel instead of a text list",
+    desc:
+      'User asked: "is it possible to make the chart as lively visualise chart instead of ' +
+      'wording?" Added js/chart-wheel.js: a natal-chart wheel (zodiac ring with sign glyphs, ' +
+      "house cusps with numbers — Ascendant/Midheaven cusps highlighted and labelled AS/MC, " +
+      "coloured planet glyphs at their real positions with simple collision avoidance for " +
+      "crowded stelliums, and coloured aspect lines connecting bodies by aspect type) built " +
+      "from the same computed chart data as before — no new astronomy, purely a visual layer. " +
+      "Used on the main chart card, the People tab's per-person cards, and the Galaxy tab's " +
+      "composite chart (which correctly omits house lines and aspects, since a midpoint " +
+      "composite doesn't have real houses). The old text table of exact degrees is kept, " +
+      "collapsed behind a \"Show exact degrees\" toggle, for anyone who wants precise numbers. " +
+      "Verified in the browser for Placidus, Whole Sign, the no-angles composite chart, and an " +
+      "unknown-birth-time chart (no house lines) — all render without error.",
+    dest: { tab: "chart", subtab: null, scrollTo: null }
+  },
+  {
+    date: "2026-09-04",
     title: "Chart tab: clearer input fields, strengths/weaknesses summary, Milky Way background",
     desc:
       "Three requests from chat, done together: (1) added visible labels and example " +

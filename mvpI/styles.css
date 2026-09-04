@@ -493,3 +493,15 @@ section.cs-section h2 {
 .brightness-bar-wrap { margin-bottom: 14px; }
 .brightness-bar { background: var(--bg-panel); border-radius: 999px; height: 8px; overflow: hidden; margin-top: 6px; }
 .brightness-fill { background: linear-gradient(90deg, var(--accent), var(--gold)); height: 100%; }
+
+.chart-wheel-wrap {
+  display: flex;
+  justify-content: center;
+  margin: 6px 0 16px;
+}
+.chart-wheel {
+  max-width: 420px;
+  width: 100%;
+  height: auto;
+}
+.chart-wheel text { user-select: none; }

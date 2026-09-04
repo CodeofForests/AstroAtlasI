@@ -250,6 +250,10 @@ const UI = (function () {
       );
     }
 
+    const wheelWrap = el("div", { class: "chart-wheel-wrap" });
+    wheelWrap.appendChild(CHART_WHEEL.build(chart));
+    wrap.appendChild(wheelWrap);
+
     const table = el("div", { class: "positions-table" });
     ASTRO.BODY_ORDER.filter((b) => b !== "SouthNode").forEach((body) => {
       const p = chart.positions[body];
@@ -262,6 +266,14 @@ const UI = (function () {
         ])
       );
     });
+    table.style.display = "none";
+    const tableToggle = el("button", { type: "button", class: "hidden-toggle", text: "Show exact degrees" });
+    tableToggle.addEventListener("click", () => {
+      const showing = table.style.display !== "none";
+      table.style.display = showing ? "none" : "";
+      tableToggle.textContent = showing ? "Show exact degrees" : "Hide exact degrees";
+    });
+    wrap.appendChild(tableToggle);
     wrap.appendChild(table);
 
     if (chart.aspects && chart.aspects.length) {
