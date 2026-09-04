@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AstroAtlasI</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<header class="app-header">
+  <div class="brand">AstroAtlasI</div>
+  <nav class="tabs">
+    <button data-tab="home" class="active">Home</button>
+    <button data-tab="construction">🔨 Construction Site</button>
+  </nav>
+</header>
+
+<main>
+
+  <section class="tabpanel active" data-tab="home">
+    <div class="home-note">
+      AstroAtlasI product build has not started yet — this is the pre-build tracker.
+      Everything currently planned lives in the <strong>Construction Site</strong> tab:
+      what's queued, what's being worked on right now, and what's already shipped,
+      each completed item linking back to where it landed in the app.
+    </div>
+  </section>
+
+  <section class="tabpanel" data-tab="construction">
+
+    <section class="cs-section" id="section-inprogress"></section>
+
+    <section class="cs-section">
+      <h2>📋 Planned <span class="count-badge" id="planned-count"></span></h2>
+      <div class="sort-bar">
+        <button id="sort-recent" type="button">Most recently added</button>
+        <button id="sort-priority" type="button">Priority</button>
+        <button id="sort-effort" type="button">Effort</button>
+        <span class="spacer"></span>
+        <button id="bulk-copy" class="bulk-copy-btn" type="button"></button>
+      </div>
+      <div id="planned-list"></div>
+      <button id="hidden-toggle" class="hidden-toggle" type="button"></button>
+      <div id="hidden-list" class="hidden-list" data-open="0"></div>
+    </section>
+
+    <section class="cs-section">
+      <h2>✅ Recently completed</h2>
+      <div id="completed-list"></div>
+    </section>
+
+  </section>
+
+</main>
+
+<div id="toast" class="toast"></div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
