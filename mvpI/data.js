@@ -118,6 +118,23 @@ const PLANNED = [
 const COMPLETED = [
   {
     date: "2026-09-04",
+    title: "Collapsible degrees/aspects, flip-card strengths, and an Edit-chart button",
+    desc:
+      "Three follow-up requests done together: (1) the exact-degrees table and the aspects " +
+      "list are now two pill buttons (\"Exact degrees (N)\" / \"Aspects (N)\") that reveal one " +
+      "panel at a time, instead of everything listed below the wheel by default; (2) the " +
+      "Strengths/Cost-of-each section is now a grid of colour-coded tiles, one per body, each " +
+      "showing the strength by default — tapping a tile flips it to reveal that same body's " +
+      "cost (title changes to \"<Body> — the cost\", caret flips), replacing the two long " +
+      "text columns; (3) added an \"✏️ Edit\" button in the top-right corner of the chart " +
+      "card that reopens the birth-data form pre-filled with the current values (name, date, " +
+      "time, unknown-time checkbox, coordinates, timezone) so the user can correct or update " +
+      "their data without starting over, with a Cancel button to back out unchanged. Verified " +
+      "in the browser: panel switching, tile flip, and edit/save/cancel all work.",
+    dest: { tab: "chart", subtab: null, scrollTo: null }
+  },
+  {
+    date: "2026-09-04",
     title: "Visualize the chart as an SVG wheel instead of a text list",
     desc:
       'User asked: "is it possible to make the chart as lively visualise chart instead of ' +

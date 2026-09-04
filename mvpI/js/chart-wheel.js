@@ -177,5 +177,5 @@ const CHART_WHEEL = (function () {
     return svg;
   }
 
-  return { build: build };
+  return { build: build, BODY_GLYPH: BODY_GLYPH, BODY_COLOR: BODY_COLOR };
 })();

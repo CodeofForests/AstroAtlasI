@@ -38,23 +38,39 @@ const UI = (function () {
 
   // ================= CHART TAB =================
 
+  let chartEditMode = false;
+
   function renderChartTab() {
     const root = document.getElementById("panel-chart");
     root.innerHTML = "";
     const s = STORE.get();
 
-    if (!s.me) {
-      root.appendChild(birthForm((profile) => {
-        STORE.setMe(profile);
-        renderChartTab();
-      }, "Enter your birth details"));
+    if (!s.me || chartEditMode) {
+      const formCard = birthForm(
+        (profile) => {
+          STORE.setMe(profile);
+          chartEditMode = false;
+          renderChartTab();
+        },
+        s.me ? "Update your birth details" : "Enter your birth details",
+        s.me ? "Save changes" : undefined,
+        s.me
+      );
+      if (s.me) {
+        const cancelBtn = el("button", { type: "button", class: "cancel-btn", text: "Cancel" });
+        cancelBtn.addEventListener("click", () => { chartEditMode = false; renderChartTab(); });
+        formCard.appendChild(cancelBtn);
+      }
+      root.appendChild(formCard);
       return;
     }
 
     const hs = getHouseSystemPref();
     const chart = computeChart(s.me, hs);
     root.appendChild(el("h2", { text: "Your chart" }));
-    root.appendChild(chartCard(s.me.name || "You", chart, hs, true));
+    root.appendChild(
+      chartCard(s.me.name || "You", chart, hs, true, () => { chartEditMode = true; renderChartTab(); })
+    );
 
     root.appendChild(el("h2", { text: "Viewing my chart" }));
     root.appendChild(strengthsWeaknessesCard(chart));
@@ -68,21 +84,22 @@ const UI = (function () {
     root.appendChild(startBtn);
   }
 
-  // A same-chart preview of the 21-day cycle's own gift/cost pairing —
-  // every "weakness" here is generated from, and shown next to, the exact
+  // A same-chart preview of the 21-day journey's own gift/cost pairing —
+  // one flip-card per body. Front shows the strength; clicking reveals its
+  // exact cost underneath, so a limitation never appears without the
   // strength it belongs to (product description §3's structural rule).
   function strengthsWeaknessesCard(chart) {
-    const wrap = el("div", { class: "card" });
+    const wrap = el("div", { class: "card sw-card" });
     if (chart.unknownTime) {
       wrap.appendChild(
         el("p", { class: "small-note", text: "Strengths and weaknesses use house placements where available; with an unknown birth time, these are based on sign alone." })
       );
     }
-    const cols = el("div", { class: "sw-columns" });
-    const strengths = el("div", { class: "sw-col" });
-    strengths.appendChild(el("h4", { class: "sw-heading strength", text: "Strengths" }));
-    const weaknesses = el("div", { class: "sw-col" });
-    weaknesses.appendChild(el("h4", { class: "sw-heading cost", text: "The cost of each" }));
+    wrap.appendChild(
+      el("p", { class: "small-note", text: "Tap a card to see the cost of that same strength — never a separate list of flaws." })
+    );
+
+    const grid = el("div", { class: "sw-grid" });
 
     CONTENT.WEEK_BODIES.forEach((body) => {
       const p = chart.positions[body];
@@ -90,20 +107,35 @@ const UI = (function () {
       const sign = ASTRO.signOf(p.lon);
       const giftText = CONTENT.dayContent("gift", body, sign, p.house);
       const costText = CONTENT.dayContent("cost", body, sign, p.house);
-      strengths.appendChild(
-        el("div", { class: "sw-item" }, [el("span", { class: "sw-body", text: body + ": " }), document.createTextNode(giftText)])
-      );
-      weaknesses.appendChild(
-        el("div", { class: "sw-item" }, [el("span", { class: "sw-body", text: body + ": " }), document.createTextNode(costText)])
-      );
+      const color = CHART_WHEEL.BODY_COLOR[body] || "#8b7cf6";
+      const glyph = CHART_WHEEL.BODY_GLYPH[body] || body[0];
+
+      const tile = el("div", { class: "sw-tile", style: "--tile-color:" + color });
+      const header = el("div", { class: "sw-tile-header" }, [
+        el("span", { class: "sw-tile-glyph", text: glyph }),
+        el("span", { class: "sw-tile-name", text: body }),
+        el("span", { class: "sw-tile-sign", text: sign }),
+        el("span", { class: "sw-tile-caret", text: "▾" })
+      ]);
+      const front = el("p", { class: "sw-tile-text sw-tile-gift", text: giftText });
+      const back = el("p", { class: "sw-tile-text sw-tile-cost", text: costText });
+      back.hidden = true;
+
+      header.addEventListener("click", () => {
+        const open = tile.classList.toggle("open");
+        front.hidden = open;
+        back.hidden = !open;
+        header.querySelector(".sw-tile-caret").textContent = open ? "▴" : "▾";
+        header.querySelector(".sw-tile-name").textContent = open ? body + " — the cost" : body;
+      });
+
+      tile.appendChild(header);
+      tile.appendChild(front);
+      tile.appendChild(back);
+      grid.appendChild(tile);
     });
 
-    cols.appendChild(strengths);
-    cols.appendChild(weaknesses);
-    wrap.appendChild(cols);
-    wrap.appendChild(
-      el("p", { class: "small-note", text: "Every item on the right is the specific cost of the matching item on the left — never a separate list of flaws." })
-    );
+    wrap.appendChild(grid);
     return wrap;
   }
 
@@ -115,7 +147,11 @@ const UI = (function () {
     return group;
   }
 
-  function birthForm(onSubmit, title, submitLabel) {
+  function pad2(n) {
+    return String(n).padStart(2, "0");
+  }
+
+  function birthForm(onSubmit, title, submitLabel, existing) {
     const wrap = el("div", { class: "card form-card" });
     wrap.appendChild(el("h3", { text: title }));
     wrap.appendChild(
@@ -155,6 +191,17 @@ const UI = (function () {
     const latInput = el("input", { type: "number", step: "0.0001", placeholder: "e.g. 52.5200" });
     const lonInput = el("input", { type: "number", step: "0.0001", placeholder: "e.g. 13.4050" });
     const zoneInput = el("input", { type: "text", placeholder: "e.g. Asia/Shanghai" });
+
+    if (existing) {
+      nameInput.value = existing.name || "";
+      dateInput.value = existing.wall.year + "-" + pad2(existing.wall.month) + "-" + pad2(existing.wall.day);
+      unknownCheck.checked = !!existing.unknownTime;
+      if (!existing.unknownTime) timeInput.value = pad2(existing.wall.hour) + ":" + pad2(existing.wall.minute);
+      latInput.value = existing.place.lat;
+      lonInput.value = existing.place.lon;
+      zoneInput.value = existing.place.zone;
+      timeInput.disabled = !!existing.unknownTime;
+    }
 
     timeInput.disabled = false;
     unknownCheck.addEventListener("change", () => {
@@ -203,9 +250,13 @@ const UI = (function () {
     return wrap;
   }
 
-  function chartCard(label, chart, hs, showHouseToggle) {
+  function chartCard(label, chart, hs, showHouseToggle, onEdit) {
     const wrap = el("div", { class: "card" });
-    wrap.appendChild(el("h3", { text: label }));
+    const heading = el("div", { class: "card-header-row" }, [
+      el("h3", { text: label }),
+      onEdit ? el("button", { type: "button", class: "edit-btn", text: "✏️ Edit", onclick: onEdit }) : null
+    ]);
+    wrap.appendChild(heading);
 
     if (showHouseToggle) {
       const toggle = el("div", { class: "toggle-row" }, [
@@ -254,7 +305,7 @@ const UI = (function () {
     wheelWrap.appendChild(CHART_WHEEL.build(chart));
     wrap.appendChild(wheelWrap);
 
-    const table = el("div", { class: "positions-table" });
+    const table = el("div", { class: "positions-table detail-panel" });
     ASTRO.BODY_ORDER.filter((b) => b !== "SouthNode").forEach((body) => {
       const p = chart.positions[body];
       if (!p) return;
@@ -266,27 +317,55 @@ const UI = (function () {
         ])
       );
     });
-    table.style.display = "none";
-    const tableToggle = el("button", { type: "button", class: "hidden-toggle", text: "Show exact degrees" });
-    tableToggle.addEventListener("click", () => {
-      const showing = table.style.display !== "none";
-      table.style.display = showing ? "none" : "";
-      tableToggle.textContent = showing ? "Show exact degrees" : "Hide exact degrees";
-    });
-    wrap.appendChild(tableToggle);
-    wrap.appendChild(table);
 
-    if (chart.aspects && chart.aspects.length) {
-      const aspWrap = el("div", { class: "aspects" });
-      aspWrap.appendChild(el("div", { class: "small-note", text: "Aspects:" }));
-      chart.aspects.forEach((a) => {
-        aspWrap.appendChild(
-          el("span", { class: "aspect-chip", text: a.a + " " + a.symbol + " " + a.b + " (orb " + a.orb + "°)" })
-        );
-      });
-      wrap.appendChild(aspWrap);
+    const aspWrap = el("div", { class: "aspects detail-panel" });
+    (chart.aspects || []).forEach((a) => {
+      aspWrap.appendChild(
+        el("span", { class: "aspect-chip", text: a.a + " " + a.symbol + " " + a.b + " (orb " + a.orb + "°)" })
+      );
+    });
+    if (!chart.aspects || !chart.aspects.length) {
+      aspWrap.appendChild(el("span", { class: "small-note", text: "No aspects within orb." }));
     }
 
+    wrap.appendChild(detailToggleGroup([
+      { label: "Exact degrees (" + Object.keys(chart.positions).length + ")", panel: table },
+      { label: "Aspects (" + (chart.aspects ? chart.aspects.length : 0) + ")", panel: aspWrap }
+    ]));
+
+    return wrap;
+  }
+
+  // Two (or more) mutually-exclusive detail panels behind pill buttons —
+  // click a pill to reveal that panel, click again (or another pill) to
+  // switch; nothing shown by default so the wheel stays the focus.
+  function detailToggleGroup(items) {
+    const wrap = el("div", { class: "detail-toggle-wrap" });
+    const btnRow = el("div", { class: "detail-toggle-row" });
+    const panelHost = el("div", { class: "detail-panel-host" });
+    let openIndex = -1;
+
+    function render() {
+      btnRow.innerHTML = "";
+      panelHost.innerHTML = "";
+      items.forEach((item, i) => {
+        const btn = el("button", {
+          type: "button",
+          class: "chip detail-toggle-btn" + (openIndex === i ? " active" : ""),
+          text: item.label
+        });
+        btn.addEventListener("click", () => {
+          openIndex = openIndex === i ? -1 : i;
+          render();
+        });
+        btnRow.appendChild(btn);
+      });
+      if (openIndex !== -1) panelHost.appendChild(items[openIndex].panel);
+    }
+    render();
+
+    wrap.appendChild(btnRow);
+    wrap.appendChild(panelHost);
     return wrap;
   }
 

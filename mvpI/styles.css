@@ -494,6 +494,98 @@ section.cs-section h2 {
 .brightness-bar { background: var(--bg-panel); border-radius: 999px; height: 8px; overflow: hidden; margin-top: 6px; }
 .brightness-fill { background: linear-gradient(90deg, var(--accent), var(--gold)); height: 100%; }
 
+/* ---- card header / edit / cancel ---- */
+
+.card-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.card-header-row h3 { margin: 0; }
+
+.edit-btn {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.edit-btn:hover { background: var(--bg-card-hover); color: var(--text); border-color: var(--accent); }
+
+.cancel-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-faint);
+  padding: 9px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  margin-top: 12px;
+  margin-left: 8px;
+}
+.cancel-btn:hover { color: var(--text); border-color: var(--text-faint); }
+
+/* ---- collapsible detail toggle group (exact degrees / aspects) ---- */
+
+.detail-toggle-wrap { margin-top: 10px; }
+.detail-toggle-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.detail-toggle-btn { display: inline-flex; align-items: center; gap: 4px; }
+.detail-panel-host { margin-top: 10px; }
+.detail-panel {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+.detail-panel.positions-table { display: flex; flex-direction: column; gap: 2px; }
+.detail-panel.aspects { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* ---- strengths/weaknesses tile grid ---- */
+
+.sw-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+.sw-tile {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--tile-color, var(--accent));
+  border-radius: 9px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.sw-tile:hover { background: var(--bg-card-hover); }
+.sw-tile.open { background: var(--bg-card-hover); }
+.sw-tile-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sw-tile-glyph {
+  color: var(--tile-color, var(--accent));
+  font-size: 18px;
+  width: 22px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.sw-tile-name { font-weight: 600; font-size: 13.5px; flex: 1; }
+.sw-tile-sign { font-size: 11.5px; color: var(--text-faint); }
+.sw-tile-caret { color: var(--text-faint); font-size: 11px; }
+.sw-tile-text {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--text-dim);
+  margin: 8px 0 0;
+}
+.sw-tile-cost { border-top: 1px dashed var(--border); padding-top: 8px; }
+
 .chart-wheel-wrap {
   display: flex;
   justify-content: center;
