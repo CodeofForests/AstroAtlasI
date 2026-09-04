@@ -11,6 +11,66 @@
 
 const PLANNED = [
   {
+    title: "Write real delineation copy (replace template-generated content)",
+    status: "open",
+    effort: "large",
+    inProgress: false,
+    statusLabel: "Not started",
+    desc:
+      "The MVP's Week 1/2/3 text (content.js) is template-generated for the prototype — one " +
+      "gift/cost paragraph per classical body (Sun–Saturn), personalized with the user's " +
+      "actual sign/house, not full hand-written sign-by-sign copy. It reads coherently and " +
+      "never puts a limitation without its paired strength, but it isn't the depth-and-length " +
+      "writing product description §2 says Millennial users will actually engage with. Needs " +
+      "a real copywriting pass once the product direction is validated — this was a scope " +
+      "trade-off made explicitly to ship a working full loop in one session rather than a " +
+      "narrower slice with hand-tuned prose."
+  },
+  {
+    title: "Verify Placidus houses against the real Swiss Ephemeris",
+    status: "open",
+    effort: "medium",
+    inProgress: false,
+    statusLabel: "Not started",
+    desc:
+      "The MVP's Placidus solver (astro-engine.js) was derived from first principles (the " +
+      "altitude=0 horizon condition, trisected diurnal/nocturnal semi-arcs) and self-" +
+      "validated in the browser: cusp 1 = Ascendant, cusp 10 = Midheaven, opposite cusps " +
+      "exactly 180° apart, and all 12 cusps monotonic — but it has never been cross-checked " +
+      "against a trusted reference ephemeris (e.g. swetest). Do that once the paid Swiss " +
+      "Ephemeris SDK is in place (see the license item below); until then, treat Placidus " +
+      "cusps as internally consistent but not externally verified."
+  },
+  {
+    title: "Chiron precision is approximate — needs real orbital elements",
+    status: "open",
+    effort: "medium",
+    inProgress: false,
+    statusLabel: "Not started",
+    desc:
+      "Chiron isn't in the vendored astronomy-engine library, so the MVP computes it via a " +
+      "simple two-body Keplerian propagation from mean J2000 elements, with no perturbation " +
+      "modelling. Chiron's real orbit is perturbed noticeably by its proximity to Saturn and " +
+      "Uranus, so this is a rough approximation, not production precision — flagged with " +
+      "\"(approx.)\" in the chart display. Replace once Swiss Ephemeris is integrated, since " +
+      "it includes Chiron properly."
+  },
+  {
+    title: "Move from browser-local storage to a real backend + accounts",
+    status: "open",
+    effort: "large",
+    inProgress: false,
+    statusLabel: "Not started",
+    desc:
+      "Per release plan §7, the MVP intentionally uses \"lighter-weight browser-local " +
+      "persistence, not production infrastructure\" — everything lives in this browser's " +
+      "localStorage, there's no account system, and consent between two people is simulated " +
+      "in one browser rather than two real accounts exchanging an invitation. This is fine " +
+      "for reviewing the product loop, but Phase 3 (Public Beta, consent-based invitation " +
+      "between real separate users) needs actual accounts and a server-side data model — " +
+      "this is a distinct, larger build, not a small follow-on."
+  },
+  {
     title: "Geo-block mainland China (IP/region check)",
     status: "open",
     effort: "medium",
@@ -49,68 +109,35 @@ const PLANNED = [
     desc:
       "Product description §12: Swiss Ephemeris Professional Edition, CHF 700 one-time, " +
       "unlimited use, valid 99 years. The free edition is AGPL and would force open-sourcing " +
-      "the whole platform, so this is a hard requirement, not a cost-saving option. Release " +
-      "plan §3 flags this as a Phase 0 blocker: procure before any ephemeris integration " +
-      "code is written against it, since Phase 1 charts depend on it being in place."
-  },
-  {
-    title: "Integrate Swiss Ephemeris (self-hosted chart engine)",
-    status: "open",
-    effort: "large",
-    inProgress: false,
-    statusLabel: "Not started",
-    desc:
-      "Core chart calculation engine, self-hosted with no runtime dependency on a third " +
-      "party's website (product description §12). Must implement the method exactly as " +
-      "declared in §6: tropical zodiac, Placidus houses by default with a Whole Sign toggle, " +
-      "Sun through Pluto plus Chiron and the lunar nodes (asteroids off by default), and " +
-      "Ptolemaic major aspects with a published orb table. This is the foundation every later " +
-      "phase depends on — release plan Phase 0 exit gate."
-  },
-  {
-    title: "Integrate GeoNames + IANA tzdata (historical offsets)",
-    status: "open",
-    effort: "medium",
-    inProgress: false,
-    statusLabel: "Not started",
-    desc:
-      "Atlas layer named in product description §12: GeoNames for birthplace coordinates, " +
-      "IANA tzdata for historical timezone offsets. This is what makes the pre-1986 China " +
-      "cases and the 1963 West Germany case in the regression set resolve correctly — " +
-      "neither country observed the DST rules a naive timezone library would assume."
-  },
-  {
-    title: "Build the regression test set",
-    status: "open",
-    effort: "small",
-    inProgress: false,
-    statusLabel: "Not started — Phase 0 exit gate",
-    desc:
-      "The four birth-data cases from product description §12: the founder's Zhuhai " +
-      "baseline, a second Zhuhai chart 15 minutes later to test degeneracy handling, a 1963 " +
-      "Erding DE case (no West German summer time that year), and a second pre-1986 China " +
-      "case in Ningbo. The 15-minute pair is the one that matters: \"Two charts fifteen " +
-      "minutes apart are functionally the same chart. If AstroAtlas produces two visibly " +
-      "different readings, it's generating noise.\" Correct behaviour is to say so out loud " +
-      "instead of presenting two unrelated readings."
-  },
-  {
-    title: "Implement unknown-birth-time handling",
-    status: "open",
-    effort: "medium",
-    inProgress: false,
-    statusLabel: "Not started",
-    desc:
-      "Product description §6: when birth time is unknown, houses, Ascendant and " +
-      "Midheaven are suppressed rather than guessed, the Moon is shown as a range across the " +
-      "sign(s) it could occupy that day, and the interface says plainly what's missing. " +
-      "\"Silently defaulting someone to noon is lying to them.\" §2 flags this as load-" +
-      "bearing rather than a nice-to-have, since birth times are far more often unknown or " +
-      "unrecorded for the Boomer generation."
+      "the whole platform, so this is a hard requirement, not a cost-saving option. The MVP " +
+      "runs on a free alternative in the meantime (see Construction Site completed log) — " +
+      "this stays open until the real license is purchased and swapped in for production."
   }
 ];
 
 const COMPLETED = [
+  {
+    date: "2026-09-04",
+    title: "Build the first clickable MVP (chart engine + 21-day cycle)",
+    desc:
+      "Built the full release-plan §11 loop as a clickable prototype: chart calculation " +
+      "(Sun–Pluto, Chiron approx., mean lunar nodes, Placidus/Whole Sign houses, Ptolemaic " +
+      "aspects) on a vendored MIT-licensed astronomy library standing in for the paid Swiss " +
+      "Ephemeris SDK; historical timezone resolution via the browser's built-in IANA tzdata " +
+      "(verified against all four product description §12 regression cases, including the " +
+      "15-minute degeneracy pair — bodies differ by well under 1°, only the fast-moving " +
+      "Ascendant/Midheaven shift meaningfully, which the app states out loud rather than " +
+      "hiding); unknown-birth-time handling (houses/Asc/MC suppressed, Moon shown as a range); " +
+      "Weeks 1–2 with paired gift/cost content; solo Week 3 (inception chart + observation " +
+      "mode, the latter storing nothing about the observed person); a consent/invite flow " +
+      "simulating both sides in one browser, with real-time withdrawal; a Galaxy view with a " +
+      "midpoint composite chart (composite angles deliberately not shown, per their known " +
+      "imprecision); and real deletion. Runs on browser-local storage only, per the lighter-" +
+      "weight prototype scope agreed in chat. Found and fixed two bugs during manual browser " +
+      "testing: a null-Ascendant display bug on the Galaxy composite card, and broken " +
+      "third-person grammar in the Week 3 \"noticing someone else\" content generator.",
+    dest: { tab: "chart", subtab: null, scrollTo: null }
+  },
   {
     date: "2026-09-04",
     title: "Build the Construction Site tracking tab",

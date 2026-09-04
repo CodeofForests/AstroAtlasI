@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>Regression test</title></head>
+<body style="font-family:monospace;white-space:pre-wrap;background:#111;color:#eee;padding:20px;">
+<div id="out">Loading…</div>
+<script src="vendor/astronomy.browser.js"></script>
+<script src="js/tz.js"></script>
+<script src="js/places.js"></script>
+<script src="js/astro-engine.js"></script>
+<script src="js/regression.js"></script>
+<script>
+  try {
+    const r = runRegressionSet();
+    let lines = [];
+    r.results.forEach((res, i) => {
+      lines.push("=== " + res.case.label + " ===");
+      lines.push("UTC: " + res.utcDate.toISOString() + "  offset=" + res.offsetMinutes + "min (expect " + res.case.expectOffsetMinutes + ") -> " + (res.offsetOk ? "OK" : "FAIL"));
+      lines.push("MC=" + res.mc.toFixed(2) + " (" + ASTRO.signOf(res.mc) + ")  ASC=" + res.asc.toFixed(2) + " (" + ASTRO.signOf(res.asc) + ")");
+      ["Sun","Moon","Mercury","Venus","Mars","Jupiter","Saturn","Uranus","Neptune","Pluto","Chiron","NorthNode"].forEach(b=>{
+        const p = res.positions[b];
+        lines.push("  " + b.padEnd(10) + p.lon.toFixed(2) + "  " + ASTRO.signOf(p.lon) + " " + ASTRO.degInSign(p.lon).toFixed(2) + "°" + (p.approximate ? " (approx)" : ""));
+      });
+      lines.push("");
+    });
+    lines.push("=== Degeneracy check (case1 vs case2) ===");
+    lines.push("max body delta = " + r.maxBodyDelta.toFixed(3) + " deg (bodies essentially unchanged: " + r.degeneracyFlagged + ")");
+    lines.push("Asc delta = " + r.ascDelta.toFixed(2) + " deg, MC delta = " + r.mcDelta.toFixed(2) + " deg (expected to move faster)");
+
+    lines.push("");
+    lines.push("=== Full Placidus cusp sanity check (case 3, Erding) ===");
+    const c3res = r.results[2];
+    const angles3 = ASTRO.computeAngles(c3res.utcDate ? Astronomy.MakeTime(c3res.utcDate) : null, 48.3086, 11.9034, null);
+    const time3 = Astronomy.MakeTime(c3res.utcDate);
+    const T3 = time3.tt/36525;
+    const obl3 = ASTRO.norm360 ? (23 + 26/60 + 21.448/3600 - (46.815*T3+0.00059*T3*T3-0.001813*T3*T3*T3)/3600) : null;
+    const angles3b = ASTRO.computeAngles(time3, 48.3086, 11.9034, obl3);
+    const cusps3 = ASTRO.placidusCusps(angles3b.ramc, 48.3086, obl3);
+    let prev = null, monotonicOk = true;
+    cusps3.forEach((c,i)=>{
+      lines.push("House " + (i+1) + ": " + c.toFixed(2) + " (" + ASTRO.signOf(c) + ")");
+      if (prev !== null) { const step = ASTRO.norm360(c - prev); if (step <= 0 || step > 90) monotonicOk = false; }
+      prev = c;
+    });
+    lines.push("House1==ASC: " + (Math.abs(cusps3[0]-c3res.asc)<0.001) + "   House10==MC: " + (Math.abs(cusps3[9]-c3res.mc)<0.001));
+    lines.push("House7==House1+180: " + (Math.abs(ASTRO.norm360(cusps3[6]-cusps3[0])-180)<0.001));
+    lines.push("Monotonic increasing around circle: " + monotonicOk);
+    document.getElementById("out").textContent = lines.join("\n");
+  } catch (e) {
+    document.getElementById("out").textContent = "ERROR: " + e.message + "\n" + e.stack;
+  }
+</script>
+</body></html>

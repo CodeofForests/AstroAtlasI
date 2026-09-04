@@ -307,3 +307,131 @@ section.cs-section h2 {
   z-index: 100;
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(-6px); }
+
+/* ---- Chart / Cycle / People / Galaxy / Privacy tabs ---- */
+
+#panel-chart h2, #panel-cycle h2, #panel-people h2, #panel-galaxy h2, #panel-privacy h2 {
+  font-size: 18px;
+  margin: 0 0 16px;
+}
+#panel-chart h3, #panel-cycle h3, #panel-people h3, #panel-galaxy h3 {
+  font-size: 15px;
+  margin: 22px 0 10px;
+}
+#panel-cycle h4, #panel-people h4, #panel-galaxy h4 {
+  font-size: 14px;
+  margin: 0 0 8px;
+}
+
+.primary-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 12px;
+}
+.primary-btn:hover { background: var(--accent-dim); }
+.primary-btn:disabled { background: var(--bg-card); color: var(--text-faint); cursor: default; }
+.primary-btn.danger { background: var(--large); }
+
+.form-card { display: flex; flex-direction: column; gap: 10px; }
+.field-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.field-row input, .field-row textarea {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 10px;
+  border-radius: 7px;
+  font-size: 13px;
+  flex: 1;
+  min-width: 140px;
+}
+.inline-check { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-dim); }
+.inline-check input { flex: none; }
+
+.place-results { display: flex; flex-direction: column; gap: 4px; }
+.place-result {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  text-align: left;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.place-result:hover { background: var(--bg-card-hover); }
+
+.form-error { color: var(--large); font-size: 12.5px; min-height: 1em; }
+
+.notice {
+  background: rgba(139,124,246,0.08);
+  border: 1px solid var(--accent-dim);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 12.5px;
+  color: var(--text-dim);
+  margin: 10px 0;
+}
+
+.toggle-row { display: flex; align-items: center; gap: 6px; margin-bottom: 10px; }
+.toggle-label { font-size: 12.5px; color: var(--text-faint); }
+.chip {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  padding: 5px 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.chip.active { background: var(--accent-dim); border-color: var(--accent); color: #fff; }
+
+.angles-row { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; margin-bottom: 10px; color: var(--text); }
+
+.positions-table { display: flex; flex-direction: column; gap: 2px; }
+.position-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 12.5px;
+}
+.position-row:last-child { border-bottom: none; }
+.body-name { width: 90px; font-weight: 600; flex-shrink: 0; }
+.house-tag { margin-left: auto; color: var(--text-faint); }
+
+.aspects { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.aspect-chip {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px 9px;
+  font-size: 11.5px;
+  color: var(--text-dim);
+}
+
+.day-text { font-size: 13.5px; line-height: 1.6; color: var(--text); white-space: pre-wrap; }
+.progress-note { font-size: 12.5px; color: var(--text-faint); margin-bottom: 14px; }
+
+.practice-picker { margin-top: 14px; }
+.practice-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+.practice-chip {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  padding: 6px 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.practice-chip.active { background: var(--gold); color: #211a05; border-color: var(--gold); font-weight: 600; }
+
+.brightness-bar-wrap { margin-bottom: 14px; }
+.brightness-bar { background: var(--bg-panel); border-radius: 999px; height: 8px; overflow: hidden; margin-top: 6px; }
+.brightness-fill { background: linear-gradient(90deg, var(--accent), var(--gold)); height: 100%; }

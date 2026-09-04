@@ -351,6 +351,14 @@
 
   // ---------- tabs ----------
 
+  const UI_RENDERERS = {
+    chart: () => typeof UI !== "undefined" && UI.renderChartTab(),
+    cycle: () => typeof UI !== "undefined" && UI.renderCycleTab(),
+    people: () => typeof UI !== "undefined" && UI.renderPeopleTab(),
+    galaxy: () => typeof UI !== "undefined" && UI.renderGalaxyTab(),
+    privacy: () => typeof UI !== "undefined" && UI.renderPrivacyTab()
+  };
+
   function showTab(name) {
     document.querySelectorAll(".tabpanel").forEach((p) => {
       p.classList.toggle("active", p.dataset.tab === name);
@@ -358,11 +366,20 @@
     document.querySelectorAll("nav.tabs button").forEach((b) => {
       b.classList.toggle("active", b.dataset.tab === name);
     });
+    if (location.hash !== "#" + name) {
+      history.replaceState(null, "", "#" + name);
+    }
     if (name === "construction") render();
+    if (UI_RENDERERS[name]) UI_RENDERERS[name]();
   }
 
   document.querySelectorAll("nav.tabs button").forEach((b) => {
     b.addEventListener("click", () => showTab(b.dataset.tab));
+  });
+
+  window.addEventListener("hashchange", () => {
+    const name = location.hash.replace("#", "");
+    if (name) showTab(name);
   });
 
   document.getElementById("sort-recent").addEventListener("click", () => {
@@ -388,5 +405,5 @@
   });
 
   render();
-  showTab("construction");
+  showTab(location.hash ? location.hash.replace("#", "") : "home");
 })();

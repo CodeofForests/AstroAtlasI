@@ -12,6 +12,11 @@
   <div class="brand">AstroAtlasI</div>
   <nav class="tabs">
     <button data-tab="home" class="active">Home</button>
+    <button data-tab="chart">Chart</button>
+    <button data-tab="cycle">21-Day Cycle</button>
+    <button data-tab="people">People</button>
+    <button data-tab="galaxy">Galaxy</button>
+    <button data-tab="privacy">Privacy</button>
     <button data-tab="construction">🔨 Construction Site</button>
   </nav>
 </header>
@@ -20,12 +25,23 @@
 
   <section class="tabpanel active" data-tab="home">
     <div class="home-note">
-      AstroAtlasI product build has not started yet — this is the pre-build tracker.
-      Everything currently planned lives in the <strong>Construction Site</strong> tab:
-      what's queued, what's being worked on right now, and what's already shipped,
-      each completed item linking back to where it landed in the app.
+      <strong>AstroAtlasI</strong> — MVP prototype of the release-plan §11 loop: chart calculation,
+      the 21-day cycle (solo Weeks 1–2, solo Week 3, Week 3 with a consenting second person),
+      a small Galaxy view, and real deletion. Start on the <strong>Chart</strong> tab.
+      <br><br>
+      <span class="small-note">
+        Chart engine runs on a free, MIT-licensed astronomy library as a stand-in for the paid
+        Swiss Ephemeris SDK (see Construction Site). Data is stored only in this browser —
+        no account, no server, per release plan §7's "lighter-weight" prototype scope.
+      </span>
     </div>
   </section>
+
+  <section class="tabpanel" data-tab="chart"><div id="panel-chart"></div></section>
+  <section class="tabpanel" data-tab="cycle"><div id="panel-cycle"></div></section>
+  <section class="tabpanel" data-tab="people"><div id="panel-people"></div></section>
+  <section class="tabpanel" data-tab="galaxy"><div id="panel-galaxy"></div></section>
+  <section class="tabpanel" data-tab="privacy"><div id="panel-privacy"></div></section>
 
   <section class="tabpanel" data-tab="construction">
 
@@ -56,6 +72,14 @@
 
 <div id="toast" class="toast"></div>
 
+<script src="vendor/astronomy.browser.js"></script>
+<script src="js/tz.js"></script>
+<script src="js/places.js"></script>
+<script src="js/astro-engine.js"></script>
+<script src="js/chart.js"></script>
+<script src="js/content.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/ui.js"></script>
 <script src="data.js"></script>
 <script src="app.js"></script>
 </body>

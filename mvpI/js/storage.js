@@ -1,0 +1,119 @@
+/*
+ * Data layer — browser-local persistence for this prototype (release plan
+ * §7 calls this out explicitly: "lighter-weight browser-local persistence,
+ * not production infrastructure"). Everything lives in localStorage under
+ * the aa_ prefix. No backend, no accounts — "consent" between people is
+ * simulated locally by holding both the user's chart and an "added person"
+ * chart in the same browser profile.
+ */
+
+const STORE = (function () {
+  "use strict";
+
+  const KEY = "aa_state_v1";
+
+  function defaultState() {
+    return {
+      me: null,           // { name, wall, place, unknownTime }
+      others: [],          // [{ id, name, wall, place, unknownTime, consent: 'invited'|'accepted'|'declined'|'withdrawn' }]
+      cycle: {
+        number: 1,
+        startedAtISO: null,   // for the inception chart (Week 3 solo)
+        completedDays: [],     // [1..21]
+        observationPersonName: null
+      },
+      deleted: false
+    };
+  }
+
+  function load() {
+    try {
+      const raw = localStorage.getItem(KEY);
+      if (!raw) return defaultState();
+      const parsed = JSON.parse(raw);
+      return Object.assign(defaultState(), parsed);
+    } catch (e) {
+      return defaultState();
+    }
+  }
+
+  function save(state) {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(state));
+    } catch (e) {
+      /* ignore — state just won't persist */
+    }
+  }
+
+  let state = load();
+
+  function get() {
+    return state;
+  }
+  function update(mutator) {
+    mutator(state);
+    save(state);
+    return state;
+  }
+
+  function setMe(profile) {
+    return update((s) => {
+      s.me = profile;
+      if (!s.cycle.startedAtISO) s.cycle.startedAtISO = new Date().toISOString();
+    });
+  }
+
+  function addOther(profile) {
+    return update((s) => {
+      s.others.push(Object.assign({ id: "p_" + Date.now(), consent: "invited" }, profile));
+    });
+  }
+  function setConsent(id, status) {
+    return update((s) => {
+      const p = s.others.find((x) => x.id === id);
+      if (p) p.consent = status;
+    });
+  }
+  function withdraw(id) {
+    return update((s) => {
+      const p = s.others.find((x) => x.id === id);
+      if (p) p.consent = "withdrawn";
+    });
+  }
+
+  function completeDay(dayNum) {
+    return update((s) => {
+      if (s.cycle.completedDays.indexOf(dayNum) === -1) s.cycle.completedDays.push(dayNum);
+    });
+  }
+  function currentDay() {
+    return Math.min(state.cycle.completedDays.length + 1, 21);
+  }
+  function repeatCycle(mode) {
+    return update((s) => {
+      s.cycle.number += 1;
+      s.cycle.completedDays = [];
+      s.cycle.startedAtISO = new Date().toISOString();
+      if (mode === "new-circle") s.others = [];
+    });
+  }
+
+  function deleteEverything() {
+    localStorage.removeItem(KEY);
+    state = defaultState();
+    state.deleted = true;
+    return state;
+  }
+
+  return {
+    get: get,
+    setMe: setMe,
+    addOther: addOther,
+    setConsent: setConsent,
+    withdraw: withdraw,
+    completeDay: completeDay,
+    currentDay: currentDay,
+    repeatCycle: repeatCycle,
+    deleteEverything: deleteEverything
+  };
+})();
