@@ -414,7 +414,10 @@
     if (name !== "home" && STEP_TABS.indexOf(name) !== -1) lastFlowTab = name;
 
     if (name === "construction") render();
-    if (name === "home") renderHomeCategories();
+    if (name === "home") {
+      renderHomeCategories();
+      if (typeof UI !== "undefined") UI.renderHomeTeaser();
+    }
     if (UI_RENDERERS[name]) UI_RENDERERS[name]();
   }
 

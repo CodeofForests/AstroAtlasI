@@ -103,6 +103,15 @@ const UI = (function () {
   // one flip-card per body. Front shows the strength; clicking reveals its
   // exact cost underneath, so a limitation never appears without the
   // strength it belongs to (product description §3's structural rule).
+  //
+  // Progressive reveal: the chart wheel and exact-degree/aspect data stay
+  // fully visible always — that's computed astronomical fact, and hiding
+  // real data to manufacture suspense would undercut the "this is science,
+  // not esoteric" positioning. What's genuinely paced, the way a guided
+  // program legitimately is, is the INTERPRETATION: a body's strength tile
+  // unlocks on the journey day that covers it, and its cost half unlocks on
+  // that same body's Week 2 day — mirroring the real Week 1/Week 2 pacing
+  // instead of dumping all 21 days of insight on day one.
   function strengthsWeaknessesCard(chart) {
     const wrap = el("div", { class: "card sw-card" });
     if (chart.unknownTime) {
@@ -111,21 +120,43 @@ const UI = (function () {
       );
     }
     wrap.appendChild(
-      el("p", { class: "small-note", text: "Tap a card to see the cost of that same strength — never a separate list of flaws." })
+      el("p", { class: "small-note", text: "Tap a card to see the cost of that same strength — never a separate list of flaws. Locked cards unlock as your journey reaches that day." })
     );
 
+    const s = STORE.get();
+    const completed = s.cycle.completedDays.length;
     const grid = el("div", { class: "sw-grid" });
 
-    CONTENT.WEEK_BODIES.forEach((body) => {
+    CONTENT.WEEK_BODIES.forEach((body, idx) => {
       const p = chart.positions[body];
       if (!p) return;
+      const giftDay = idx + 1;
+      const costDay = idx + 8;
+      const giftUnlocked = completed >= giftDay;
+      const costUnlocked = completed >= costDay;
+
       const sign = ASTRO.signOf(p.lon);
-      const giftText = CONTENT.dayContent("gift", body, sign, p.house);
-      const costText = CONTENT.dayContent("cost", body, sign, p.house);
       const color = CHART_WHEEL.BODY_COLOR[body] || "#8b7cf6";
       const glyph = CHART_WHEEL.BODY_GLYPH[body] || body[0];
 
-      const tile = el("div", { class: "sw-tile", style: "--tile-color:" + color });
+      const tile = el("div", { class: "sw-tile" + (giftUnlocked ? "" : " locked"), style: "--tile-color:" + color });
+
+      if (!giftUnlocked) {
+        tile.appendChild(
+          el("div", { class: "sw-tile-header" }, [
+            el("span", { class: "sw-tile-glyph", text: "🔒" }),
+            el("span", { class: "sw-tile-name", text: body }),
+            el("span", { class: "sw-tile-sign", text: "Day " + giftDay })
+          ])
+        );
+        tile.appendChild(el("p", { class: "sw-tile-text", text: "Unlocks on Day " + giftDay + " of your journey." }));
+        grid.appendChild(tile);
+        return;
+      }
+
+      const giftText = CONTENT.dayContent("gift", body, sign, p.house);
+      const costText = costUnlocked ? CONTENT.dayContent("cost", body, sign, p.house) : null;
+
       const header = el("div", { class: "sw-tile-header" }, [
         el("span", { class: "sw-tile-glyph", text: glyph }),
         el("span", { class: "sw-tile-name", text: body }),
@@ -133,7 +164,10 @@ const UI = (function () {
         el("span", { class: "sw-tile-caret", text: "▾" })
       ]);
       const front = el("p", { class: "sw-tile-text sw-tile-gift", text: giftText });
-      const back = el("p", { class: "sw-tile-text sw-tile-cost", text: costText });
+      const back = el("p", {
+        class: "sw-tile-text sw-tile-cost",
+        text: costUnlocked ? costText : "🔒 The cost unlocks on Day " + costDay + " of your journey."
+      });
       back.hidden = true;
 
       header.addEventListener("click", () => {
@@ -141,7 +175,7 @@ const UI = (function () {
         front.hidden = open;
         back.hidden = !open;
         header.querySelector(".sw-tile-caret").textContent = open ? "▴" : "▾";
-        header.querySelector(".sw-tile-name").textContent = open ? body + " — the cost" : body;
+        header.querySelector(".sw-tile-name").textContent = open ? body + (costUnlocked ? " — the cost" : "") : body;
       });
 
       tile.appendChild(header);
@@ -392,6 +426,65 @@ const UI = (function () {
     return 3;
   }
 
+  // Shared with the Galaxy tab so "how bright is my sky" means the same
+  // thing everywhere it's shown.
+  function brightnessPercent(s) {
+    const selfAwareDays = s.cycle.completedDays.filter((d) => d <= 14).length;
+    return Math.round((selfAwareDays / 14) * 100);
+  }
+
+  // One-line, non-spoiling teaser naming today's specific placement —
+  // enough to make someone curious about what it means, not enough to
+  // replace actually opening the journey.
+  function todaysFocusLabel(s, hs) {
+    const day = STORE.currentDay();
+    if (day > 21) return null;
+    const week = weekOf(day);
+    if (week === 3) return "the people in your life";
+    const chart = computeChart(s.me, hs);
+    const body = CONTENT.WEEK_BODIES[(day - 1) % 7];
+    const p = chart.positions[body];
+    if (!p) return null;
+    return body + " in " + ASTRO.signOf(p.lon);
+  }
+
+  // "Continue your journey" teaser on the Home screen — only shown once
+  // there's a chart and a journey in motion. Surfaces the brightness meter
+  // (previously buried in the Galaxy tab) and today's specific focus, so
+  // there's a concrete, changing reason to come back rather than a static
+  // homepage that looks the same every visit.
+  function renderHomeTeaser() {
+    const host = document.getElementById("home-teaser");
+    if (!host) return;
+    host.innerHTML = "";
+    const s = STORE.get();
+    if (!s.me) return;
+
+    const hs = getHouseSystemPref();
+    const day = STORE.currentDay();
+    const brightness = brightnessPercent(s);
+    const card = el("div", { class: "teaser-card" });
+
+    if (day > 21) {
+      card.appendChild(el("p", { class: "teaser-line", text: "Your journey is complete. Your sky is " + brightness + "% bright." }));
+      const btn = el("button", { type: "button", class: "primary-btn teaser-btn", text: "See my Galaxy" });
+      btn.addEventListener("click", () => location.hash = "#galaxy");
+      card.appendChild(btn);
+    } else {
+      const focus = todaysFocusLabel(s, hs);
+      card.appendChild(
+        el("p", { class: "teaser-line", text: "Day " + day + " of 21 — your sky is " + brightness + "% bright." })
+      );
+      if (focus) {
+        card.appendChild(el("p", { class: "teaser-focus", text: "Today's focus involves " + focus + "." }));
+      }
+      const btn = el("button", { type: "button", class: "primary-btn teaser-btn", text: "Continue my journey" });
+      btn.addEventListener("click", () => location.hash = "#cycle");
+      card.appendChild(btn);
+    }
+    host.appendChild(card);
+  }
+
   function renderCycleTab() {
     const root = document.getElementById("panel-cycle");
     root.innerHTML = "";
@@ -620,8 +713,7 @@ const UI = (function () {
       accepted.map((p) => ({ name: p.name, chart: computeChart(p, hs) }))
     );
 
-    const selfAwareDays = s.cycle.completedDays.filter((d) => d <= 14).length;
-    const brightness = Math.round((selfAwareDays / 14) * 100);
+    const brightness = brightnessPercent(s);
 
     root.appendChild(el("h2", { text: "Your Galaxy" }));
     root.appendChild(
@@ -682,6 +774,7 @@ const UI = (function () {
   }
 
   function renderAll() {
+    renderHomeTeaser();
     renderBirthDataStep();
     renderChartStep();
     renderCycleTab();
@@ -692,6 +785,7 @@ const UI = (function () {
 
   return {
     renderAll: renderAll,
+    renderHomeTeaser: renderHomeTeaser,
     renderBirthDataStep: renderBirthDataStep,
     renderChartStep: renderChartStep,
     renderCycleTab: renderCycleTab,

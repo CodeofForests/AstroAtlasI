@@ -11,6 +11,32 @@
 
 const PLANNED = [
   {
+    title: "Add an earned-surprise moment when a new star/reveal unlocks",
+    status: "open",
+    effort: "medium",
+    inProgress: false,
+    statusLabel: "Not started",
+    desc:
+      "Deferred from the curiosity-roadmap build (see completed log): right now an unlocked " +
+      "strength tile just quietly becomes clickable — there's no moment that marks it. A small " +
+      "animation or highlight the first time a new tile unlocks (or the first time the Galaxy " +
+      "brightness bar crosses a threshold) would make progress feel earned rather than just " +
+      "counted, closer to the \"always one more surprising thing\" goal than a flat unlock."
+  },
+  {
+    title: "Dim not-yet-reached bodies on the chart wheel itself",
+    status: "open",
+    effort: "small",
+    inProgress: false,
+    statusLabel: "Not started",
+    desc:
+      "Companion to the strengths-tile progressive reveal: the chart wheel currently always " +
+      "shows every body at full brightness, even ones whose interpretation is still locked. " +
+      "Visually dimming (not hiding — the position is real data and stays visible) the glyphs " +
+      "for bodies not yet reached in the journey would tie the wheel and the tiles together " +
+      "into one consistent reveal story, without hiding any actual astronomical fact."
+  },
+  {
     title: "Move from browser-local storage to a real backend + accounts",
     status: "open",
     effort: "large",
@@ -116,6 +142,29 @@ const PLANNED = [
 ];
 
 const COMPLETED = [
+  {
+    date: "2026-09-05",
+    title: "Progressive reveal + Home \"continue your journey\" teaser (Alice-in-Wonderland curiosity)",
+    desc:
+      'User asked to execute the full curiosity roadmap proposed in chat: "always want to ' +
+      'explore more and more... like Alice in Wonderland." Built the two highest-value pieces: ' +
+      "(1) Home now shows a \"Day N of 21 — your sky is X% bright\" teaser plus a one-line, " +
+      "non-spoiling focus hint (\"Today's focus involves Mars in Leo\") whenever a journey is " +
+      "in progress, surfacing the brightness meter that was previously buried in the Galaxy " +
+      "tab — a \"Continue my journey\" button underneath; (2) the strengths/weaknesses tiles " +
+      "on the chart step now unlock progressively: each body's strength tile unlocks on the " +
+      "journey day that covers it, and its cost half unlocks separately on that body's Week 2 " +
+      "day, so a fresh chart shows locked \"Unlocks on Day N\" cards waiting to open rather " +
+      "than the whole 21 days of insight at once. Deliberately did NOT lock the chart wheel or " +
+      "the exact-degrees/aspects data — that's real computed astronomy, and hiding actual facts " +
+      "to manufacture suspense would work against the \"this is science, not esoteric\" " +
+      "positioning from earlier today; only the paced INTERPRETATION is gated, mirroring the " +
+      "product's own Week 1/Week 2 structure. Factored brightness math into one shared " +
+      "brightnessPercent() helper so Home and Galaxy always agree (verified both read 29% for " +
+      "the same test profile). Deferred for now: a visual \"new star unlocked\" surprise moment " +
+      "and dimming not-yet-reached wheel placements — flagged as open follow-ons below.",
+    dest: { tab: "home", subtab: null, scrollTo: null }
+  },
   {
     date: "2026-09-05",
     title: "Clarify category cards 3 and 4 — one person vs. everyone together",
