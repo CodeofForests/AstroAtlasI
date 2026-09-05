@@ -118,6 +118,23 @@ const PLANNED = [
 const COMPLETED = [
   {
     date: "2026-09-05",
+    title: "Shrink intro to ~20 words; reframe categories as needs, not features",
+    desc:
+      "Voice-message follow-up: intro needed to be readable in about ten seconds, and the " +
+      "category cards needed to feel like they matched the user's actual need rather than " +
+      "reading as a feature list — with a clear sense that answers come from their own unique " +
+      "chart, not a generic horoscope. Cut the intro from two paragraphs to one 20-word line " +
+      "(\"Your birth date creates a unique pattern. We turn it into clear insights and small " +
+      "daily habits, made for you.\"). Reworded the question from \"What do you want to " +
+      "explore?\" to \"What do you need right now?\" and every category label to a first-person " +
+      "need statement (\"I want to know myself better\", \"I want a daily practice\", \"I want " +
+      "to understand someone else\", \"I want to see our connection\"), with each description " +
+      "now naming the personalization explicitly (\"your exact chart\", \"chosen from your own " +
+      "chart\", \"their one-of-a-kind chart\", \"everyone's own charts\").",
+    dest: { tab: "home", subtab: null, scrollTo: null }
+  },
+  {
+    date: "2026-09-05",
     title: "Home screen: plain-language intro + \"what do you want to explore\" categories",
     desc:
       'Tester feedback relayed in chat: needed an intro an elementary student could follow, ' +

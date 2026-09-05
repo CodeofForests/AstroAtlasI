@@ -418,37 +418,39 @@
     if (UI_RENDERERS[name]) UI_RENDERERS[name]();
   }
 
-  // Home screen categories — plain language, each maps to where that
-  // question actually lives in the app. "Understand myself" / "Start my
-  // journey" fall back to the birth-data step first if there's no chart
-  // yet; the other two go straight to People / Galaxy, which have their
-  // own "set up your chart first" prompts if needed.
+  // Home screen categories — framed as a need ("I want...") rather than a
+  // feature name, and each description says explicitly that the answer
+  // comes from the user's own exact chart, not a generic horoscope. Maps
+  // to where that question actually lives in the app: "know myself" /
+  // "daily practice" fall back to the birth-data step first if there's no
+  // chart yet; the other two go straight to People / Galaxy, which have
+  // their own "set up your chart first" prompts if needed.
   const HOME_CATEGORIES = [
     {
       icon: "🧭",
-      label: "Understand myself",
-      desc: "See what comes naturally to you, and what's harder.",
+      label: "I want to know myself better",
+      desc: "Your exact chart, decoded into your real strengths and struggles.",
       needsChart: true,
       target: "mychart"
     },
     {
       icon: "📅",
-      label: "Start my 21-day journey",
-      desc: "One small, real thing to notice about yourself each day.",
+      label: "I want a daily practice",
+      desc: "One small step each day, chosen from your own chart.",
       needsChart: true,
       target: "cycle"
     },
     {
       icon: "🤝",
-      label: "Understand someone I care about",
-      desc: "See them more clearly — only with their OK.",
+      label: "I want to understand someone else",
+      desc: "See their one-of-a-kind chart — only with their OK.",
       needsChart: false,
       target: "people"
     },
     {
       icon: "🌌",
-      label: "See my Galaxy",
-      desc: "A shared picture of the people you're getting to know.",
+      label: "I want to see our connection",
+      desc: "A shared map built from everyone's own charts.",
       needsChart: false,
       target: "galaxy"
     }
