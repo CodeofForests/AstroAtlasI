@@ -10,40 +10,48 @@
 
 <header class="app-header">
   <div class="brand">AstroAtlasI</div>
-  <nav class="tabs">
-    <button data-tab="home" class="active">Home</button>
-    <button data-tab="chart">Chart</button>
-    <button data-tab="cycle">21-Day Journey</button>
-    <button data-tab="people">People</button>
-    <button data-tab="galaxy">Galaxy</button>
-    <button data-tab="privacy">Privacy</button>
-    <button data-tab="construction">🔨 Construction Site</button>
-  </nav>
+  <nav class="step-nav" id="step-nav" hidden></nav>
+  <div class="header-actions">
+    <button id="construction-fab" class="construction-btn" type="button" title="Construction Site — build tracker">🔨</button>
+    <button id="account-btn" class="account-btn" type="button">👤 My account</button>
+  </div>
 </header>
+
+<div class="drawer" id="account-drawer" data-open="0">
+  <div class="drawer-backdrop" id="drawer-backdrop"></div>
+  <div class="drawer-panel">
+    <div class="drawer-header">
+      <h3>My account</h3>
+      <button id="drawer-close" class="drawer-close" type="button">✕</button>
+    </div>
+    <p class="small-note">Local to this browser only — no login yet.</p>
+    <button class="drawer-link" data-tab="people" type="button">People</button>
+    <button class="drawer-link" data-tab="galaxy" type="button">Galaxy</button>
+    <button class="drawer-link" data-tab="privacy" type="button">Privacy</button>
+  </div>
+</div>
 
 <main>
 
   <section class="tabpanel active" data-tab="home">
-    <div class="home-note">
-      <strong>AstroAtlasI</strong> — MVP prototype of the release-plan §11 loop: chart calculation,
-      the 21-day journey (solo Weeks 1–2, solo Week 3, Week 3 with a consenting second person),
-      a small Galaxy view, and real deletion. Start on the <strong>Chart</strong> tab.
-      <br><br>
-      <span class="small-note">
-        Chart engine runs on a free, MIT-licensed astronomy library as a stand-in for the paid
-        Swiss Ephemeris SDK (see Construction Site). Data is stored only in this browser —
-        no account, no server, per release plan §7's "lighter-weight" prototype scope.
-      </span>
+    <div class="hero">
+      <div class="hero-inner">
+        <p class="hero-line">Are you ready to dive into your universe?</p>
+        <button id="hero-cta" class="primary-btn hero-cta" type="button">Yes, I am ready.</button>
+      </div>
     </div>
   </section>
 
-  <section class="tabpanel" data-tab="chart"><div id="panel-chart"></div></section>
+  <section class="tabpanel" data-tab="birthdata"><div id="panel-birthdata"></div></section>
+  <section class="tabpanel" data-tab="mychart"><div id="panel-mychart"></div></section>
   <section class="tabpanel" data-tab="cycle"><div id="panel-cycle"></div></section>
   <section class="tabpanel" data-tab="people"><div id="panel-people"></div></section>
   <section class="tabpanel" data-tab="galaxy"><div id="panel-galaxy"></div></section>
   <section class="tabpanel" data-tab="privacy"><div id="panel-privacy"></div></section>
 
   <section class="tabpanel" data-tab="construction">
+
+    <button id="construction-back" class="back-link" type="button">← Back to app</button>
 
     <section class="cs-section" id="section-inprogress"></section>
 

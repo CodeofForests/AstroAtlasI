@@ -27,6 +27,14 @@ const UI = (function () {
   function houseSystemLabel(hs) {
     return hs === "whole-sign" ? "Whole Sign" : "Placidus";
   }
+  function backButton() {
+    return el("button", {
+      type: "button",
+      class: "back-link",
+      text: "← Back",
+      onclick: () => { if (window.APP_BACK) window.APP_BACK(); }
+    });
+  }
 
   // ---------- state helpers ----------
   function getHouseSystemPref() {
@@ -36,32 +44,39 @@ const UI = (function () {
     localStorage.setItem("aa_house_system", v);
   }
 
-  // ================= CHART TAB =================
+  // ================= STEP 2: BIRTH DATA =================
 
-  let chartEditMode = false;
-
-  function renderChartTab() {
-    const root = document.getElementById("panel-chart");
+  function renderBirthDataStep() {
+    const root = document.getElementById("panel-birthdata");
     root.innerHTML = "";
     const s = STORE.get();
 
-    if (!s.me || chartEditMode) {
-      const formCard = birthForm(
-        (profile) => {
-          STORE.setMe(profile);
-          chartEditMode = false;
-          renderChartTab();
-        },
-        s.me ? "Update your birth details" : "Enter your birth details",
-        s.me ? "Save changes" : undefined,
-        s.me
-      );
-      if (s.me) {
-        const cancelBtn = el("button", { type: "button", class: "cancel-btn", text: "Cancel" });
-        cancelBtn.addEventListener("click", () => { chartEditMode = false; renderChartTab(); });
-        formCard.appendChild(cancelBtn);
-      }
-      root.appendChild(formCard);
+    const formCard = birthForm(
+      (profile) => {
+        STORE.setMe(profile);
+        location.hash = "#mychart";
+      },
+      s.me ? "Update your birth details" : "Enter your birth details",
+      s.me ? "Save changes" : "Calculate my chart",
+      s.me
+    );
+    if (s.me) {
+      const cancelBtn = el("button", { type: "button", class: "cancel-btn", text: "Cancel" });
+      cancelBtn.addEventListener("click", () => { location.hash = "#mychart"; });
+      formCard.appendChild(cancelBtn);
+    }
+    root.appendChild(formCard);
+  }
+
+  // ================= STEP 3: MY CHART =================
+
+  function renderChartStep() {
+    const root = document.getElementById("panel-mychart");
+    root.innerHTML = "";
+    const s = STORE.get();
+
+    if (!s.me) {
+      location.hash = "#birthdata";
       return;
     }
 
@@ -69,7 +84,7 @@ const UI = (function () {
     const chart = computeChart(s.me, hs);
     root.appendChild(el("h2", { text: "Your chart" }));
     root.appendChild(
-      chartCard(s.me.name || "You", chart, hs, true, () => { chartEditMode = true; renderChartTab(); })
+      chartCard(s.me.name || "You", chart, hs, true, () => { location.hash = "#birthdata"; })
     );
 
     root.appendChild(el("h2", { text: "Viewing my chart" }));
@@ -265,13 +280,13 @@ const UI = (function () {
           type: "button",
           class: "chip" + (hs === "placidus" ? " active" : ""),
           text: "Placidus",
-          onclick: () => { setHouseSystemPref("placidus"); renderChartTab(); }
+          onclick: () => { setHouseSystemPref("placidus"); renderChartStep(); }
         }),
         el("button", {
           type: "button",
           class: "chip" + (hs === "whole-sign" ? " active" : ""),
           text: "Whole Sign",
-          onclick: () => { setHouseSystemPref("whole-sign"); renderChartTab(); }
+          onclick: () => { setHouseSystemPref("whole-sign"); renderChartStep(); }
         })
       ]);
       wrap.appendChild(toggle);
@@ -383,7 +398,11 @@ const UI = (function () {
     const s = STORE.get();
 
     if (!s.me) {
-      root.appendChild(el("div", { class: "empty-hint", text: "Set up your chart first on the Chart tab." }));
+      const hint = el("div", { class: "empty-hint", text: "Set up your chart first." });
+      const goBtn = el("button", { type: "button", class: "primary-btn", text: "Enter my birth data" });
+      goBtn.addEventListener("click", () => location.hash = "#birthdata");
+      root.appendChild(hint);
+      root.appendChild(goBtn);
       return;
     }
 
@@ -484,7 +503,7 @@ const UI = (function () {
 
       const inviteHint = document.createElement("div");
       inviteHint.className = "notice";
-      inviteHint.textContent = "Have someone ready to add instead? Go to the People tab to send a consent-based invitation.";
+      inviteHint.textContent = "Have someone ready to add instead? Go to My account → People to send a consent-based invitation.";
       wrap.appendChild(inviteHint);
     }
     return wrap;
@@ -524,6 +543,7 @@ const UI = (function () {
     root.innerHTML = "";
     const s = STORE.get();
 
+    root.appendChild(backButton());
     root.appendChild(el("h2", { text: "People" }));
     root.appendChild(
       el("p", { class: "small-note", text:
@@ -584,8 +604,14 @@ const UI = (function () {
     const s = STORE.get();
     const hs = getHouseSystemPref();
 
+    root.appendChild(backButton());
+
     if (!s.me) {
-      root.appendChild(el("div", { class: "empty-hint", text: "Set up your chart first on the Chart tab." }));
+      const hint = el("div", { class: "empty-hint", text: "Set up your chart first." });
+      const goBtn = el("button", { type: "button", class: "primary-btn", text: "Enter my birth data" });
+      goBtn.addEventListener("click", () => location.hash = "#birthdata");
+      root.appendChild(hint);
+      root.appendChild(goBtn);
       return;
     }
 
@@ -630,6 +656,7 @@ const UI = (function () {
   function renderPrivacyTab() {
     const root = document.getElementById("panel-privacy");
     root.innerHTML = "";
+    root.appendChild(backButton());
     root.appendChild(el("h2", { text: "Privacy & deletion" }));
     root.appendChild(
       el("div", { class: "card" }, [
@@ -648,19 +675,28 @@ const UI = (function () {
       if (confirm("This permanently deletes your chart, journey progress, and everyone added. Continue?")) {
         STORE.deleteEverything();
         renderAll();
-        location.hash = "#chart";
+        location.hash = "#home";
       }
     });
     root.appendChild(btn);
   }
 
   function renderAll() {
-    renderChartTab();
+    renderBirthDataStep();
+    renderChartStep();
     renderCycleTab();
     renderPeopleTab();
     renderGalaxyTab();
     renderPrivacyTab();
   }
 
-  return { renderAll: renderAll, renderChartTab: renderChartTab, renderCycleTab: renderCycleTab, renderPeopleTab: renderPeopleTab, renderGalaxyTab: renderGalaxyTab, renderPrivacyTab: renderPrivacyTab };
+  return {
+    renderAll: renderAll,
+    renderBirthDataStep: renderBirthDataStep,
+    renderChartStep: renderChartStep,
+    renderCycleTab: renderCycleTab,
+    renderPeopleTab: renderPeopleTab,
+    renderGalaxyTab: renderGalaxyTab,
+    renderPrivacyTab: renderPrivacyTab
+  };
 })();

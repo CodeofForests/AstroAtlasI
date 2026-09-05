@@ -88,8 +88,8 @@ main, .toast {
 header.app-header {
   display: flex;
   align-items: center;
-  gap: 24px;
-  padding: 0 24px;
+  gap: 12px;
+  padding: 0 16px;
   height: 56px;
   background: var(--bg-panel);
   border-bottom: 1px solid var(--border);
@@ -103,43 +103,189 @@ header.app-header {
   letter-spacing: 0.02em;
   font-size: 15px;
   color: var(--text);
+  flex-shrink: 0;
 }
 
-nav.tabs {
+/* ---- step nav (birth data / my chart / journey progress) ---- */
+
+nav.step-nav {
+  flex: 1;
   display: flex;
+  align-items: center;
+  justify-content: center;
   gap: 4px;
+  overflow-x: auto;
+  min-width: 0;
 }
+nav.step-nav[hidden] { display: none; }
 
-nav.tabs button {
+.step-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   background: transparent;
   border: none;
-  color: var(--text-dim);
-  padding: 8px 14px;
-  border-radius: 8px;
+  color: var(--text-faint);
+  padding: 4px 6px;
+  border-radius: 999px;
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 11.5px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
-
-nav.tabs button:hover { background: var(--bg-card); color: var(--text); }
-
-nav.tabs button.active {
-  background: var(--accent);
-  color: #fff;
+.step-pill .step-num {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-dim);
+  flex-shrink: 0;
 }
+.step-pill.current { color: var(--text); }
+.step-pill.current .step-num { background: var(--accent); color: #fff; }
+.step-pill.done .step-num { background: var(--green); color: #fff; }
+.step-pill.disabled { cursor: default; opacity: 0.4; }
+.step-pill .step-label { display: none; }
+@media (min-width: 560px) {
+  .step-pill .step-label { display: inline; }
+  .step-pill { padding: 4px 10px; }
+}
+.step-connector { width: 12px; height: 1px; background: var(--border); flex-shrink: 0; }
+
+.header-actions { flex-shrink: 0; display: flex; align-items: center; gap: 8px; }
+.account-btn {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.account-btn:hover { background: var(--bg-card-hover); border-color: var(--accent); }
+
+/* ---- construction site quick-access (team/build-tracking tool, always visible) ---- */
+
+.construction-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.construction-btn:hover { border-color: var(--accent); color: var(--text); }
+
+.back-link {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 14px;
+  display: inline-block;
+}
+.back-link:hover { text-decoration: underline; }
+
+/* ---- account drawer ---- */
+
+.drawer { position: fixed; inset: 0; z-index: 30; pointer-events: none; }
+.drawer[data-open="1"] { pointer-events: auto; }
+.drawer-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.drawer[data-open="1"] .drawer-backdrop { opacity: 1; }
+.drawer-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: min(300px, 86vw);
+  background: var(--bg-panel);
+  border-left: 1px solid var(--border);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transform: translateX(100%);
+  transition: transform 0.22s ease;
+}
+.drawer[data-open="1"] .drawer-panel { transform: translateX(0); }
+.drawer-header { display: flex; align-items: center; justify-content: space-between; }
+.drawer-header h3 { margin: 0; font-size: 16px; }
+.drawer-close { background: none; border: none; color: var(--text-dim); font-size: 16px; cursor: pointer; }
+.drawer-link {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  text-align: left;
+  cursor: pointer;
+}
+.drawer-link:hover { background: var(--bg-card-hover); border-color: var(--accent); }
 
 main { max-width: 880px; margin: 0 auto; padding: 32px 20px 80px; }
+body.is-home main { max-width: none; padding: 0; }
 
 .tabpanel { display: none; }
 .tabpanel.active { display: block; }
 
-.home-note {
-  color: var(--text-dim);
-  line-height: 1.6;
-  background: var(--bg-panel);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 20px;
+/* ---- Step 1: home hero ---- */
+
+.hero {
+  min-height: calc(100vh - 56px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 24px;
+  position: relative;
+}
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 70% 50% at 50% 42%, rgba(139,124,246,0.20), transparent 70%);
+  pointer-events: none;
+}
+.hero-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+  max-width: 380px;
+}
+.hero-line {
+  font-size: 22px;
+  line-height: 1.4;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0;
+}
+.hero-cta { font-size: 15px; padding: 14px 30px; border-radius: 999px; margin-top: 0; }
+@media (min-width: 640px) {
+  .hero-line { font-size: 30px; }
 }
 
 section.cs-section { margin-bottom: 36px; }
@@ -368,11 +514,11 @@ section.cs-section h2 {
 
 /* ---- Chart / Cycle / People / Galaxy / Privacy tabs ---- */
 
-#panel-chart h2, #panel-cycle h2, #panel-people h2, #panel-galaxy h2, #panel-privacy h2 {
+#panel-mychart h2, #panel-cycle h2, #panel-people h2, #panel-galaxy h2, #panel-privacy h2 {
   font-size: 18px;
   margin: 0 0 16px;
 }
-#panel-chart h3, #panel-cycle h3, #panel-people h3, #panel-galaxy h3 {
+#panel-mychart h3, #panel-cycle h3, #panel-people h3, #panel-galaxy h3 {
   font-size: 15px;
   margin: 22px 0 10px;
 }

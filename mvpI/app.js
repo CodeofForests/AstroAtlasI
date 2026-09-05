@@ -349,32 +349,99 @@
     }
   }
 
-  // ---------- tabs ----------
+  // ---------- tabs / step flow ----------
 
   const UI_RENDERERS = {
-    chart: () => typeof UI !== "undefined" && UI.renderChartTab(),
+    birthdata: () => typeof UI !== "undefined" && UI.renderBirthDataStep(),
+    mychart: () => typeof UI !== "undefined" && UI.renderChartStep(),
     cycle: () => typeof UI !== "undefined" && UI.renderCycleTab(),
     people: () => typeof UI !== "undefined" && UI.renderPeopleTab(),
     galaxy: () => typeof UI !== "undefined" && UI.renderGalaxyTab(),
     privacy: () => typeof UI !== "undefined" && UI.renderPrivacyTab()
   };
 
+  const STEP_TABS = ["home", "birthdata", "mychart", "cycle"];
+  const STEP_LABELS = { home: "Welcome", birthdata: "Birth data", mychart: "My chart", cycle: "Journey" };
+
+  let lastFlowTab = "birthdata";
+  window.APP_BACK = () => { location.hash = "#" + lastFlowTab; };
+
+  function renderStepNav(current) {
+    const nav = document.getElementById("step-nav");
+    const currentIndex = STEP_TABS.indexOf(current);
+    if (currentIndex === -1 || current === "home") {
+      nav.hidden = true;
+      nav.innerHTML = "";
+      return;
+    }
+    nav.hidden = false;
+    nav.innerHTML = "";
+    const s = STORE.get();
+    STEP_TABS.forEach((tabName, i) => {
+      const reachable = i <= 1 || !!s.me;
+      const pill = el("button", {
+        type: "button",
+        class:
+          "step-pill" +
+          (i === currentIndex ? " current" : "") +
+          (i < currentIndex ? " done" : "") +
+          (!reachable ? " disabled" : "")
+      });
+      pill.disabled = !reachable;
+      pill.appendChild(el("span", { class: "step-num", text: i < currentIndex ? "✓" : String(i + 1) }));
+      pill.appendChild(el("span", { class: "step-label", text: STEP_LABELS[tabName] }));
+      if (reachable) pill.addEventListener("click", () => { location.hash = "#" + tabName; });
+      nav.appendChild(pill);
+      if (i < STEP_TABS.length - 1) nav.appendChild(el("span", { class: "step-connector" }));
+    });
+  }
+
   function showTab(name) {
+    const s = STORE.get();
+    if ((name === "mychart" || name === "cycle") && !s.me) {
+      name = "birthdata";
+    }
+
     document.querySelectorAll(".tabpanel").forEach((p) => {
       p.classList.toggle("active", p.dataset.tab === name);
-    });
-    document.querySelectorAll("nav.tabs button").forEach((b) => {
-      b.classList.toggle("active", b.dataset.tab === name);
     });
     if (location.hash !== "#" + name) {
       history.replaceState(null, "", "#" + name);
     }
+
+    document.body.classList.toggle("is-home", name === "home");
+    renderStepNav(name);
+    if (name !== "home" && STEP_TABS.indexOf(name) !== -1) lastFlowTab = name;
+
     if (name === "construction") render();
     if (UI_RENDERERS[name]) UI_RENDERERS[name]();
   }
 
-  document.querySelectorAll("nav.tabs button").forEach((b) => {
-    b.addEventListener("click", () => showTab(b.dataset.tab));
+  document.getElementById("hero-cta").addEventListener("click", () => {
+    const s = STORE.get();
+    location.hash = s.me ? "#mychart" : "#birthdata";
+  });
+
+  document.getElementById("account-btn").addEventListener("click", () => {
+    document.getElementById("account-drawer").dataset.open = "1";
+  });
+  document.getElementById("drawer-close").addEventListener("click", closeDrawer);
+  document.getElementById("drawer-backdrop").addEventListener("click", closeDrawer);
+  function closeDrawer() {
+    document.getElementById("account-drawer").dataset.open = "0";
+  }
+  document.querySelectorAll(".drawer-link").forEach((b) => {
+    b.addEventListener("click", () => {
+      location.hash = "#" + b.dataset.tab;
+      closeDrawer();
+    });
+  });
+
+  document.getElementById("construction-fab").addEventListener("click", () => {
+    location.hash = "#construction";
+  });
+  document.getElementById("construction-back").addEventListener("click", () => {
+    location.hash = "#" + lastFlowTab;
   });
 
   window.addEventListener("hashchange", () => {

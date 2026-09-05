@@ -11,6 +11,21 @@
 
 const PLANNED = [
   {
+    title: "Move from browser-local storage to a real backend + accounts",
+    status: "open",
+    effort: "large",
+    inProgress: true,
+    statusLabel: "In progress — mobile 4-step flow first, account stays local-only for now",
+    desc:
+      "User asked for a clear mobile-first user journey (Home tagline → birth data → chart " +
+      "→ journey) with a 'My account' entry point. Built the 4-step flow with My account as a " +
+      "local-only stub (People/Galaxy/Privacy behind it, no real login) — this item now tracks " +
+      "the remaining real-backend work: actual accounts, cross-device persistence, and the true " +
+      "two-account consent exchange (Phase 3) that a localStorage-only account can't do. Needed " +
+      "before Phase 3 (real consent-based invitations between separate users) and before any " +
+      "cross-device use of 'My account'."
+  },
+  {
     title: "Write real delineation copy (replace template-generated content)",
     status: "open",
     effort: "large",
@@ -54,21 +69,6 @@ const PLANNED = [
       "Uranus, so this is a rough approximation, not production precision — flagged with " +
       "\"(approx.)\" in the chart display. Replace once Swiss Ephemeris is integrated, since " +
       "it includes Chiron properly."
-  },
-  {
-    title: "Move from browser-local storage to a real backend + accounts",
-    status: "open",
-    effort: "large",
-    inProgress: false,
-    statusLabel: "Not started",
-    desc:
-      "Per release plan §7, the MVP intentionally uses \"lighter-weight browser-local " +
-      "persistence, not production infrastructure\" — everything lives in this browser's " +
-      "localStorage, there's no account system, and consent between two people is simulated " +
-      "in one browser rather than two real accounts exchanging an invitation. This is fine " +
-      "for reviewing the product loop, but Phase 3 (Public Beta, consent-based invitation " +
-      "between real separate users) needs actual accounts and a server-side data model — " +
-      "this is a distinct, larger build, not a small follow-on."
   },
   {
     title: "Geo-block mainland China (IP/region check)",
@@ -131,7 +131,7 @@ const COMPLETED = [
       "time, unknown-time checkbox, coordinates, timezone) so the user can correct or update " +
       "their data without starting over, with a Cancel button to back out unchanged. Verified " +
       "in the browser: panel switching, tile flip, and edit/save/cancel all work.",
-    dest: { tab: "chart", subtab: null, scrollTo: null }
+    dest: { tab: "mychart", subtab: null, scrollTo: null }
   },
   {
     date: "2026-09-04",
@@ -149,7 +149,7 @@ const COMPLETED = [
       "collapsed behind a \"Show exact degrees\" toggle, for anyone who wants precise numbers. " +
       "Verified in the browser for Placidus, Whole Sign, the no-angles composite chart, and an " +
       "unknown-birth-time chart (no house lines) — all render without error.",
-    dest: { tab: "chart", subtab: null, scrollTo: null }
+    dest: { tab: "mychart", subtab: null, scrollTo: null }
   },
   {
     date: "2026-09-04",
@@ -167,7 +167,7 @@ const COMPLETED = [
       "left unchanged since they're not user-visible. Also added a CSS-only Milky Way " +
       "background (layered star dots + a soft blurred diagonal nebula band) across the whole " +
       "app, no external image dependency.",
-    dest: { tab: "chart", subtab: null, scrollTo: null }
+    dest: { tab: "mychart", subtab: null, scrollTo: null }
   },
   {
     date: "2026-09-04",
@@ -189,7 +189,7 @@ const COMPLETED = [
       "weight prototype scope agreed in chat. Found and fixed two bugs during manual browser " +
       "testing: a null-Ascendant display bug on the Galaxy composite card, and broken " +
       "third-person grammar in the Week 3 \"noticing someone else\" content generator.",
-    dest: { tab: "chart", subtab: null, scrollTo: null }
+    dest: { tab: "mychart", subtab: null, scrollTo: null }
   },
   {
     date: "2026-09-04",
