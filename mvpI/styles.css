@@ -340,6 +340,47 @@ body.is-home main { max-width: none; padding: 0; }
 .category-label { font-weight: 600; font-size: 14.5px; color: var(--text); }
 .category-desc { font-size: 12.5px; color: var(--text-dim); line-height: 1.45; }
 
+/* Text-only category buttons: no explanation, just a topic word — the
+   point is that clicking is the only way to find out what it says about
+   you, so these read as an invitation to play, not a feature list. */
+.category-card-text {
+  align-items: center;
+  justify-content: center;
+  padding: 26px 16px;
+  min-height: 92px;
+  position: relative;
+  overflow: hidden;
+}
+.category-card-text::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 80% 80% at 50% 120%, rgba(139,124,246,0.16), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.category-card-text:hover::before { opacity: 1; }
+.category-card-text:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px) scale(1.015);
+}
+.category-card-text .category-label {
+  font-size: 18px;
+  font-weight: 700;
+  position: relative;
+  z-index: 1;
+}
+
+/* ---- Domain reveal screen (Relationship / My job / My health) ---- */
+
+.domain-reveal { margin-top: 8px; }
+.domain-heading {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  margin: 4px 0 10px;
+}
+
 section.cs-section { margin-bottom: 36px; }
 
 section.cs-section h2 {

@@ -398,7 +398,7 @@
 
   function showTab(name) {
     const s = STORE.get();
-    if ((name === "mychart" || name === "cycle") && !s.me) {
+    if ((name === "mychart" || name === "cycle" || name === "domain") && !s.me) {
       name = "birthdata";
     }
 
@@ -420,45 +420,22 @@
       // but parked for now per user request — not called here on purpose.
       // Re-enable by adding: if (typeof UI !== "undefined") UI.renderHomeTeaser();
     }
+    if (name === "domain") renderDomainReveal();
     if (UI_RENDERERS[name]) UI_RENDERERS[name]();
   }
 
-  // Home screen categories — framed as a need ("I want...") rather than a
-  // feature name, and each description says explicitly that the answer
-  // comes from the user's own exact chart, not a generic horoscope. Maps
-  // to where that question actually lives in the app: "know myself" /
-  // "daily practice" fall back to the birth-data step first if there's no
-  // chart yet; the other two go straight to People / Galaxy, which have
-  // their own "set up your chart first" prompts if needed.
+  // Home screen categories: plain topic words, no explanation underneath —
+  // the whole point is that clicking one is the only way to find out what
+  // it says about YOU specifically, not a feature menu you can read your
+  // way through first. "Myself" goes to the full chart (already the deepest
+  // payoff); the other three open a one-screen personalized reveal pulled
+  // from a real, specific placement in the user's own chart.
+  let currentDomain = null;
   const HOME_CATEGORIES = [
-    {
-      icon: "🧭",
-      label: "I want to know myself better",
-      desc: "Your exact chart, decoded into your real strengths and struggles.",
-      needsChart: true,
-      target: "mychart"
-    },
-    {
-      icon: "📅",
-      label: "I want a daily practice",
-      desc: "One small step each day, chosen from your own chart.",
-      needsChart: true,
-      target: "cycle"
-    },
-    {
-      icon: "🤝",
-      label: "I want to understand one person",
-      desc: "Add them, and see their own chart — only with their OK.",
-      needsChart: false,
-      target: "people"
-    },
-    {
-      icon: "🌌",
-      label: "I want to see us together",
-      desc: "One combined chart made from everyone you've added — your shared dynamic.",
-      needsChart: false,
-      target: "galaxy"
-    }
+    { label: "Myself", needsChart: true, target: "mychart" },
+    { label: "Relationship", needsChart: true, target: "domain", domain: "relationship" },
+    { label: "My job", needsChart: true, target: "domain", domain: "job" },
+    { label: "My health", needsChart: true, target: "domain", domain: "health" }
   ];
 
   function renderHomeCategories() {
@@ -467,16 +444,59 @@
     const s = STORE.get();
     grid.innerHTML = "";
     HOME_CATEGORIES.forEach((cat) => {
-      const card = el("button", { type: "button", class: "category-card" }, [
-        el("span", { class: "category-icon", text: cat.icon }),
-        el("span", { class: "category-label", text: cat.label }),
-        el("span", { class: "category-desc", text: cat.desc })
+      const card = el("button", { type: "button", class: "category-card category-card-text" }, [
+        el("span", { class: "category-label", text: cat.label })
       ]);
       card.addEventListener("click", () => {
+        currentDomain = cat.domain || null;
         location.hash = "#" + (cat.needsChart && !s.me ? "birthdata" : cat.target);
       });
       grid.appendChild(card);
     });
+  }
+
+  const DOMAIN_LABEL = { relationship: "Relationship", job: "My job", health: "My health" };
+  const DOMAIN_CTA = {
+    relationship: { label: "Add someone to go deeper", target: "people" },
+    job: { label: "See my full chart", target: "mychart" },
+    health: { label: "See my full chart", target: "mychart" }
+  };
+
+  function renderDomainReveal() {
+    const root = document.getElementById("panel-domain");
+    root.innerHTML = "";
+    const s = STORE.get();
+    const kind = currentDomain || "relationship";
+
+    const back = el("button", { type: "button", class: "back-link", text: "← Back" });
+    back.addEventListener("click", () => { location.hash = "#home"; });
+    root.appendChild(back);
+
+    const hs = localStorage.getItem("aa_house_system") || "placidus";
+    const chart = computeChart(s.me, hs);
+    const reveal = CONTENT.domainReveal(kind, chart);
+    const card = el("div", { class: "card domain-reveal" });
+    card.appendChild(el("h2", { text: DOMAIN_LABEL[kind] }));
+
+    if (!reveal || reveal.needsBirthTime) {
+      card.appendChild(
+        el("p", { class: "day-text", text: "Reading your career angle (the Midheaven) needs a birth time. Add yours to unlock this." })
+      );
+      const btn = el("button", { type: "button", class: "primary-btn", text: "Add my birth time" });
+      btn.addEventListener("click", () => { location.hash = "#birthdata"; });
+      card.appendChild(btn);
+      root.appendChild(card);
+      return;
+    }
+
+    card.appendChild(el("p", { class: "domain-heading", text: reveal.heading }));
+    card.appendChild(el("p", { class: "day-text", text: reveal.text }));
+    root.appendChild(card);
+
+    const cta = DOMAIN_CTA[kind];
+    const ctaBtn = el("button", { type: "button", class: "primary-btn", text: cta.label });
+    ctaBtn.addEventListener("click", () => { location.hash = "#" + cta.target; });
+    root.appendChild(ctaBtn);
   }
 
   document.getElementById("account-btn").addEventListener("click", () => {

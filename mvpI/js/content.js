@@ -119,11 +119,60 @@ const CONTENT = (function () {
     );
   }
 
+  // Home-screen life-area reveals (Relationship / My job / My health). Each
+  // pulls a real, specific placement from the user's own chart — never a
+  // generic "Aries are..." line — so the first thing someone sees after
+  // picking a category names something true about THEM specifically. Reuses
+  // SIGN_FLAVOR rather than writing three more 12-entry content sets from
+  // scratch, since the underlying "mode of expression" idea is domain-
+  // agnostic (how you love, how you work, how you spend energy are all
+  // just that same trait pointed at a different room in the house).
+  function domainReveal(kind, chart) {
+    if (kind === "relationship") {
+      const venus = chart.positions.Venus, moon = chart.positions.Moon;
+      if (!venus || !moon) return null;
+      const venusSign = ASTRO.signOf(venus.lon), moonSign = ASTRO.signOf(moon.lon);
+      const text =
+        venusSign === moonSign
+          ? "Both your Venus and Moon are in " + venusSign + " — " + SIGN_FLAVOR[venusSign] +
+            " isn't just how you show up in relationships, it's what you need back too."
+          : "In relationships, you show up through " + SIGN_FLAVOR[venusSign] + ". " +
+            "Underneath, you need to feel loved through " + SIGN_FLAVOR[moonSign] + ".";
+      return { heading: "Venus in " + venusSign + ", Moon in " + moonSign, text: text };
+    }
+    if (kind === "job") {
+      if (chart.unknownTime || chart.mc === null || chart.mc === undefined) return { needsBirthTime: true };
+      const saturn = chart.positions.Saturn;
+      const mcSign = ASTRO.signOf(chart.mc);
+      const saturnSign = ASTRO.signOf(saturn.lon);
+      const text =
+        mcSign === saturnSign
+          ? "Both your Midheaven and Saturn are in " + mcSign + " — " + SIGN_FLAVOR[mcSign] +
+            " isn't just the face you bring to work, it's the discipline you've built your whole career around."
+          : "The face you bring to work leans on " + SIGN_FLAVOR[mcSign] + ". " +
+            "Saturn shows where you've had to build real discipline: " + SIGN_FLAVOR[saturnSign] + ".";
+      return { heading: "Midheaven in " + mcSign + ", Saturn in " + saturnSign, text: text };
+    }
+    if (kind === "health") {
+      const mars = chart.positions.Mars;
+      if (!mars) return null;
+      const marsSign = ASTRO.signOf(mars.lon);
+      return {
+        heading: "Mars in " + marsSign,
+        text:
+          "That's how you spend energy: " + SIGN_FLAVOR[marsSign] + ". " +
+          "Notice where that shows up in your body today — this isn't medical advice, just a mirror."
+      };
+    }
+    return null;
+  }
+
   return {
     WEEK_BODIES: WEEK_BODIES,
     BODY_CORE: BODY_CORE,
     PRACTICES: PRACTICES,
     dayContent: dayContent,
-    noticeContent: noticeContent
+    noticeContent: noticeContent,
+    domainReveal: domainReveal
   };
 })();

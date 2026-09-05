@@ -11,6 +11,21 @@
 
 const PLANNED = [
   {
+    title: "Bring Daily Practice / Galaxy back onto Home now that categories are life-domains",
+    status: "open",
+    effort: "small",
+    inProgress: false,
+    statusLabel: "Not started",
+    desc:
+      "Side effect of switching Home's four categories to life-domains (Myself / Relationship " +
+      "/ My job / My health): the old direct entry points \"I want a daily practice\" and \"I " +
+      "want to see us together\" (Galaxy) are gone from Home. Both are still reachable — the " +
+      "21-day journey via Myself → \"Go to my 21-day journey\", Galaxy via My account → Galaxy, " +
+      "or via the Relationship reveal's \"Add someone to go deeper\" once someone's added — but " +
+      "neither is one tap from Home anymore. Worth a look once real usage shows whether that " +
+      "matters."
+  },
+  {
     title: "Revisit the Home \"continue your journey\" teaser",
     status: "open",
     effort: "small",
@@ -156,6 +171,28 @@ const PLANNED = [
 ];
 
 const COMPLETED = [
+  {
+    date: "2026-09-05",
+    title: "Home: life-domain categories (Myself/Relationship/Job/Health) with per-domain reveals",
+    desc:
+      'User in chat: change the question to "What do you want to know about?", make the four ' +
+      "categories text-only (no explanation) — Myself / Relationship / My job / My health — " +
+      "and make clicking one feel like \"wow, this is about me\", not a generic explainer, so " +
+      "the user feels curious, has a sense of choice, and wants to keep playing. Rebuilt the " +
+      "category grid as plain topic words with no description line (styled bigger/bolder, a " +
+      "hover glow) so clicking is the only way to find out what it says about you. Added a new " +
+      "domain-reveal screen (CONTENT.domainReveal in content.js) that pulls a real, specific " +
+      "placement straight from the user's own chart for each topic — Relationship reads Venus " +
+      "+ Moon, My job reads Midheaven + Saturn (prompts for birth time if missing, since MC " +
+      "needs one), My health reads Mars, each with a short \"go deeper\" CTA into the relevant " +
+      "part of the app. Myself still goes straight to the full chart (already the deepest " +
+      "payoff). Caught and fixed a real bug while testing: when two placements land in the " +
+      "same sign (e.g. Midheaven and Saturn both in Scorpio), the reveal read as a verbatim " +
+      "repeated sentence — added same-sign phrasing (\"Both your Midheaven and Saturn are in " +
+      "Scorpio — that isn't just the face you bring to work, it's the discipline you've built " +
+      "your career around\") so it still reads as insight, not a template glitch.",
+    dest: { tab: "home", subtab: null, scrollTo: null }
+  },
   {
     date: "2026-09-05",
     title: "Progressive reveal + Home \"continue your journey\" teaser (Alice-in-Wonderland curiosity)",
