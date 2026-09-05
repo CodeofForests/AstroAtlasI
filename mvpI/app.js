@@ -414,13 +414,63 @@
     if (name !== "home" && STEP_TABS.indexOf(name) !== -1) lastFlowTab = name;
 
     if (name === "construction") render();
+    if (name === "home") renderHomeCategories();
     if (UI_RENDERERS[name]) UI_RENDERERS[name]();
   }
 
-  document.getElementById("hero-cta").addEventListener("click", () => {
+  // Home screen categories — plain language, each maps to where that
+  // question actually lives in the app. "Understand myself" / "Start my
+  // journey" fall back to the birth-data step first if there's no chart
+  // yet; the other two go straight to People / Galaxy, which have their
+  // own "set up your chart first" prompts if needed.
+  const HOME_CATEGORIES = [
+    {
+      icon: "🧭",
+      label: "Understand myself",
+      desc: "See what comes naturally to you, and what's harder.",
+      needsChart: true,
+      target: "mychart"
+    },
+    {
+      icon: "📅",
+      label: "Start my 21-day journey",
+      desc: "One small, real thing to notice about yourself each day.",
+      needsChart: true,
+      target: "cycle"
+    },
+    {
+      icon: "🤝",
+      label: "Understand someone I care about",
+      desc: "See them more clearly — only with their OK.",
+      needsChart: false,
+      target: "people"
+    },
+    {
+      icon: "🌌",
+      label: "See my Galaxy",
+      desc: "A shared picture of the people you're getting to know.",
+      needsChart: false,
+      target: "galaxy"
+    }
+  ];
+
+  function renderHomeCategories() {
+    const grid = document.getElementById("category-grid");
+    if (!grid) return;
     const s = STORE.get();
-    location.hash = s.me ? "#mychart" : "#birthdata";
-  });
+    grid.innerHTML = "";
+    HOME_CATEGORIES.forEach((cat) => {
+      const card = el("button", { type: "button", class: "category-card" }, [
+        el("span", { class: "category-icon", text: cat.icon }),
+        el("span", { class: "category-label", text: cat.label }),
+        el("span", { class: "category-desc", text: cat.desc })
+      ]);
+      card.addEventListener("click", () => {
+        location.hash = "#" + (cat.needsChart && !s.me ? "birthdata" : cat.target);
+      });
+      grid.appendChild(card);
+    });
+  }
 
   document.getElementById("account-btn").addEventListener("click", () => {
     document.getElementById("account-drawer").dataset.open = "1";

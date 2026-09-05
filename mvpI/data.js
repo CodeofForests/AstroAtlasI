@@ -117,6 +117,25 @@ const PLANNED = [
 
 const COMPLETED = [
   {
+    date: "2026-09-05",
+    title: "Home screen: plain-language intro + \"what do you want to explore\" categories",
+    desc:
+      'Tester feedback relayed in chat: needed an intro an elementary student could follow, ' +
+      'the home page changed from a single vague CTA to a real question with categories, and ' +
+      'a general check that the app doesn\'t read as "ungrounded." Replaced the old hero line ' +
+      '("Are you ready to dive into your universe?") — flagged as the main ungrounded phrase — ' +
+      "with a \"What is AstroAtlas?\" intro card explaining the mechanism in plain terms (birth " +
+      "date/time/place → a calculated map, read as a mirror not a prediction, paired with real " +
+      "everyday practices), explicitly stating \"it's not magic and it doesn't tell the future.\" " +
+      "Below that, \"What do you want to explore?\" now shows four concrete category cards " +
+      "(Understand myself / Start my 21-day journey / Understand someone I care about / See my " +
+      "Galaxy) instead of one CTA button — each routes straight to the right place, falling back " +
+      "to the birth-data step first if there's no chart yet. Checked the rest of the app's copy " +
+      "for similar ungrounded language (universe/cosmic/destiny/fate/magical) — nothing else " +
+      "turned up.",
+    dest: { tab: "home", subtab: null, scrollTo: null }
+  },
+  {
     date: "2026-09-04",
     title: "Collapsible degrees/aspects, flip-card strengths, and an Edit-chart button",
     desc:
