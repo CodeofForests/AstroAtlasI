@@ -442,15 +442,15 @@
     },
     {
       icon: "🤝",
-      label: "I want to understand someone else",
-      desc: "See their one-of-a-kind chart — only with their OK.",
+      label: "I want to understand one person",
+      desc: "Add them, and see their own chart — only with their OK.",
       needsChart: false,
       target: "people"
     },
     {
       icon: "🌌",
-      label: "I want to see our connection",
-      desc: "A shared map built from everyone's own charts.",
+      label: "I want to see us together",
+      desc: "One combined chart made from everyone you've added — your shared dynamic.",
       needsChart: false,
       target: "galaxy"
     }

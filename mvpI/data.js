@@ -118,6 +118,21 @@ const PLANNED = [
 const COMPLETED = [
   {
     date: "2026-09-05",
+    title: "Clarify category cards 3 and 4 — one person vs. everyone together",
+    desc:
+      'User in chat: "help me to understand the difference from the fourth box and the ' +
+      'third? Because this seems to be the same." They were genuinely different underneath ' +
+      "(box 3 -> People tab, add one person and see their own individual chart; box 4 -> " +
+      "Galaxy tab, a midpoint composite chart merging everyone added) but the wording didn't " +
+      "make that obvious. Reworded: \"I want to understand someone else\" -> \"I want to " +
+      "understand one person\" (desc now says \"Add them, and see their own chart\"), and " +
+      "\"I want to see our connection\" -> \"I want to see us together\" (desc now says \"One " +
+      "combined chart made from everyone you've added — your shared dynamic\"). The one/" +
+      "everyone-together distinction is now in the label itself, not just the description.",
+    dest: { tab: "home", subtab: null, scrollTo: null }
+  },
+  {
+    date: "2026-09-05",
     title: "Intro: curiosity-driven question + science framing, not esoteric",
     desc:
       'User asked in chat: "I would like the customer to feel very curious to want to explore ' +
