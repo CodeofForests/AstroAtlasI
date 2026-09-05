@@ -118,6 +118,21 @@ const PLANNED = [
 const COMPLETED = [
   {
     date: "2026-09-05",
+    title: "Intro: curiosity-driven question + science framing, not esoteric",
+    desc:
+      'User asked in chat: "I would like the customer to feel very curious to want to explore ' +
+      'more... I do not want them to feel esoteric. but I want them to feel its science." ' +
+      "Replaced the flat statement headline (\"What is AstroAtlas?\" / \"Your birth date " +
+      "creates a unique pattern...\") with an actual question as the hook — \"What were the " +
+      "planets doing the moment you were born?\" — answered by \"We calculate it precisely, " +
+      "like an astronomer — then turn it into real insights and small daily habits, made for " +
+      "you.\" The word \"pattern\" (reads soft/astrology-vague) is gone; \"calculate\" and " +
+      "\"astronomer\" anchor it as a real, precise computation rather than a vibe. Kept it to " +
+      "two short lines so it's still readable in seconds.",
+    dest: { tab: "home", subtab: null, scrollTo: null }
+  },
+  {
+    date: "2026-09-05",
     title: "Shrink intro to ~20 words; reframe categories as needs, not features",
     desc:
       "Voice-message follow-up: intro needed to be readable in about ten seconds, and the " +
