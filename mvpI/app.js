@@ -416,7 +416,9 @@
     if (name === "construction") render();
     if (name === "home") {
       renderHomeCategories();
-      if (typeof UI !== "undefined") UI.renderHomeTeaser();
+      // "Continue your journey" teaser is built (js/ui.js renderHomeTeaser)
+      // but parked for now per user request — not called here on purpose.
+      // Re-enable by adding: if (typeof UI !== "undefined") UI.renderHomeTeaser();
     }
     if (UI_RENDERERS[name]) UI_RENDERERS[name]();
   }

@@ -11,6 +11,20 @@
 
 const PLANNED = [
   {
+    title: "Revisit the Home \"continue your journey\" teaser",
+    status: "open",
+    effort: "small",
+    inProgress: false,
+    statusLabel: "Parked — user said not relevant right now, revisit later",
+    desc:
+      'User in chat: "please remove the teaser journey one because now it\'s not relevant. ' +
+      'We will be with it later." The teaser itself (Day N of 21 / brightness % / today\'s ' +
+      "focus hint / Continue button) is still fully built in js/ui.js as renderHomeTeaser() " +
+      "— app.js's showTab just no longer calls it on the home screen, with a comment pointing " +
+      "at the one line to uncomment when it's wanted back. Nothing was deleted, so re-enabling " +
+      "is a one-line change once there's a reason to revisit it."
+  },
+  {
     title: "Add an earned-surprise moment when a new star/reveal unlocks",
     status: "open",
     effort: "medium",
