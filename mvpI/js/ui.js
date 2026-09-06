@@ -76,6 +76,45 @@ const UI = (function () {
 
   // ================= STEP 3: MY CHART =================
 
+  // One-screen orientation the first time the chart is reached: what the tool
+  // does, in three plain lines, before any of it is shown. "See my chart" is
+  // the only action — the 21-day journey is named but not offered as a button
+  // here, so a first-time user isn't asked to commit to something they can't
+  // yet place. Shown once (localStorage flag), cleared on full deletion.
+  function howItWorksSeen() {
+    try { return localStorage.getItem("aa_howitworks_seen") === "1"; }
+    catch (e) { return false; }
+  }
+  function howItWorksIntro() {
+    const frag = document.createDocumentFragment();
+    frag.appendChild(el("h2", { text: "How this works" }));
+    const card = el("div", { class: "card howitworks" });
+    [
+      ["We calculate your chart like an astronomer",
+       "From the date, time and place you gave — where the Sun, Moon and planets actually were the minute you were born."],
+      ["It names what you're good at — and what it costs",
+       "Every strength in a chart carries a price. We always show the two together, never a separate list of flaws."],
+      ["A 21-day journey is there if you want it",
+       "It turns one strength into a small daily practice — about five minutes a day for three weeks, and missing a day never resets anything. Entirely optional."]
+    ].forEach(function (row) {
+      card.appendChild(
+        el("div", { class: "hiw-row" }, [
+          el("strong", { class: "hiw-title", text: row[0] }),
+          el("p", { class: "hiw-desc", text: row[1] })
+        ])
+      );
+    });
+    frag.appendChild(card);
+    const btn = el("button", { class: "primary-btn", type: "button", text: "See my chart" });
+    btn.addEventListener("click", function () {
+      try { localStorage.setItem("aa_howitworks_seen", "1"); } catch (e) {}
+      renderChartStep();
+      window.scrollTo(0, 0);
+    });
+    frag.appendChild(btn);
+    return frag;
+  }
+
   function renderChartStep() {
     const root = document.getElementById("panel-mychart");
     root.innerHTML = "";
@@ -83,6 +122,11 @@ const UI = (function () {
 
     if (!s.me) {
       location.hash = "#birthdata";
+      return;
+    }
+
+    if (!howItWorksSeen()) {
+      root.appendChild(howItWorksIntro());
       return;
     }
 
@@ -96,13 +140,28 @@ const UI = (function () {
     root.appendChild(el("h2", { text: "Viewing my chart" }));
     root.appendChild(strengthsWeaknessesCard(chart));
 
-    const startBtn = el("button", {
-      class: "primary-btn",
-      type: "button",
-      text: s.cycle.completedDays.length > 0 || s.cycle.startedAtISO ? "Go to my 21-day journey" : "Start my 21-day journey"
-    });
-    startBtn.addEventListener("click", () => location.hash = "#cycle");
-    root.appendChild(startBtn);
+    // The journey is an optional next step, not the headline. Kept as a
+    // quiet outline-button offer with the time commitment stated up front,
+    // so the chart itself stays the main thing on this screen.
+    const started = s.cycle.completedDays.length > 0;
+    const offer = el("div", { class: "card journey-offer" });
+    if (started) {
+      offer.appendChild(el("h4", { text: "Your 21-day journey" }));
+      offer.appendChild(el("p", { class: "offer-text", text:
+        "Day " + STORE.currentDay() + " of 21 — pick up where you left off." }));
+      const b = el("button", { class: "offer-btn", type: "button", text: "Continue the journey →" });
+      b.addEventListener("click", () => location.hash = "#cycle");
+      offer.appendChild(b);
+    } else {
+      offer.appendChild(el("h4", { text: "One optional next step" }));
+      offer.appendChild(el("p", { class: "offer-text", text:
+        "The 21-day journey takes one strength from your chart and turns it into a small daily " +
+        "practice — about five minutes a day for three weeks. Miss a day and nothing resets." }));
+      const b = el("button", { class: "offer-btn", type: "button", text: "Start the 21-day journey →" });
+      b.addEventListener("click", () => location.hash = "#cycle");
+      offer.appendChild(b);
+    }
+    root.appendChild(offer);
   }
 
   // A same-chart preview of the 21-day journey's own gift/cost pairing —
@@ -428,6 +487,16 @@ const UI = (function () {
 
   // ================= CYCLE TAB =================
 
+  // Which day the user is currently looking at, independent of how far
+  // they've progressed. null = "follow today". reviewMode = browsing a past
+  // day from the Day-21 summary. Both are transient UI state, not persisted.
+  let viewDay = null;
+  let reviewMode = false;
+  function clampViewDay(maxDay) {
+    if (viewDay == null || viewDay > maxDay) viewDay = maxDay;
+    if (viewDay < 1) viewDay = 1;
+  }
+
   function weekOf(day) {
     if (day <= 7) return 1;
     if (day <= 14) return 2;
@@ -465,6 +534,16 @@ const UI = (function () {
     const host = document.getElementById("home-teaser");
     if (!host) return;
     host.innerHTML = "";
+
+    // PARKED. A first-time visitor should never meet "your journey" / "Day N
+    // of 21" language on the Home screen before anything has explained what
+    // the tool is or how the 21 days work — it reads as being dropped into
+    // something they never opted into. The card below stays built for when
+    // there's a real onboarding path in front of it; until then this function
+    // only clears its host and returns. Re-enable by deleting this block.
+    return;
+    /* eslint-disable no-unreachable */
+
     const s = STORE.get();
     if (!s.me) return;
 
@@ -493,6 +572,355 @@ const UI = (function () {
     host.appendChild(card);
   }
 
+  // Plain-language toolkit, collapsed by default so it never gets in the way
+  // of someone who already knows the words. Rendered at the top of the
+  // Journey tab and again on the Day-21 divergence screen.
+  function glossaryCard() {
+    const box = el("details", { class: "glossary" });
+    box.appendChild(el("summary", { text: "New here? What these words mean" }));
+    CONTENT.GLOSSARY.forEach((g) => {
+      box.appendChild(
+        el("div", { class: "gloss-item" }, [
+          el("strong", { class: "gloss-term", text: g.term }),
+          el("p", { class: "gloss-plain", text: g.plain }),
+          el("p", { class: "gloss-real", text: g.real })
+        ])
+      );
+    });
+    return box;
+  }
+
+  // Bridge screen between "My chart" and Day 1 — shown once, the first time
+  // someone opens the Journey tab with nothing completed yet. Answers the
+  // question the raw Day-1 view skips: what IS this, why does it follow from
+  // my chart, and what am I agreeing to. "Begin Day 1" dismisses it for good
+  // (a returning user on journey 2+ goes straight to the day).
+  function journeyIntroSeen() {
+    try { return localStorage.getItem("aa_journey_intro_dismissed") === "1"; }
+    catch (e) { return false; }
+  }
+  function journeyIntro() {
+    const frag = document.createDocumentFragment();
+    frag.appendChild(el("h2", { text: "From your chart to your journey" }));
+    frag.appendChild(el("p", { class: "progress-note", text:
+      "Your chart showed you the ground you started on — your gifts, and what they cost. " +
+      "The next 21 days are where you do something with it." }));
+
+    const weeks = el("div", { class: "card journey-weeks" });
+    weeks.appendChild(el("h4", { text: "How the three weeks go" }));
+    [
+      ["Week 1 — your gifts", "One a day. The thing each planet in your chart is naturally built for."],
+      ["Week 2 — what they cost", "The same seven strengths, seen from the price they carry. Never a separate list of flaws."],
+      ["Week 3 — the people around you", "Your chart pointed outward — at someone real, with their say-so."]
+    ].forEach(function (row) {
+      weeks.appendChild(
+        el("div", { class: "jw-row" }, [
+          el("strong", { class: "jw-title", text: row[0] }),
+          el("p", { class: "jw-desc", text: row[1] })
+        ])
+      );
+    });
+    frag.appendChild(weeks);
+
+    frag.appendChild(
+      el("div", { class: "card" }, [
+        el("h4", { text: "What a day asks of you" }),
+        el("p", { class: "day-text", text:
+          "A short read, then pick a practice, then make one real choice — go with the grain of your " +
+          "chart, or deliberately against it. About five minutes. Miss a day and nothing resets — come back whenever." })
+      ])
+    );
+
+    const twins = el("div", { class: "notice" });
+    twins.textContent =
+      "Identical twins share a birth chart. Their lives still diverge — because of choices like these. " +
+      "The chart is the map; this is the part that's yours.";
+    frag.appendChild(twins);
+
+    frag.appendChild(glossaryCard());
+
+    const begin = el("button", { class: "primary-btn", type: "button", text: "Begin Day 1" });
+    begin.addEventListener("click", function () {
+      try { localStorage.setItem("aa_journey_intro_dismissed", "1"); } catch (e) {}
+      renderCycleTab();
+      window.scrollTo(0, 0);
+    });
+    frag.appendChild(begin);
+    return frag;
+  }
+
+  // The daily fork: after reading the day's gift/cost, pick one real move —
+  // with the grain of your chart, or deliberately against it. Logged either
+  // way. Tapping the active option again clears it.
+  function choiceFork(day, week) {
+    const fork = week === 3
+      ? CONTENT.week3Fork(day)
+      : CONTENT.experimentFor(CONTENT.WEEK_BODIES[(day - 1) % 7]);
+    if (!fork) return document.createComment("no fork");
+
+    const s = STORE.get();
+    const chosen = (s.cycle.choices || {})[day] || null;
+    const wrap = el("div", { class: "card fork" });
+    wrap.appendChild(el("h4", { text: "Today's choice" }));
+    wrap.appendChild(el("p", { class: "day-text", text: fork.prompt }));
+
+    const opts = el("div", { class: "fork-opts" });
+    [["lean", fork.lean], ["counter", fork.counter]].forEach(([key, label]) => {
+      const b = el("button", {
+        type: "button",
+        class: "fork-opt" + (chosen === key ? " active" : ""),
+        text: label
+      });
+      b.addEventListener("click", () => {
+        STORE.recordChoice(day, chosen === key ? null : key);
+        renderCycleTab();
+      });
+      opts.appendChild(b);
+    });
+    wrap.appendChild(opts);
+    wrap.appendChild(el("p", { class: "small-note", text:
+      "Neither is right. Whichever you pick, it goes in your log — that's the part no birth chart decided." }));
+    return wrap;
+  }
+
+  // Day-21 payoff: the chart you were handed vs. the one you made by showing
+  // up, the string of 21 choices only you produced, and the North Node as
+  // "who you're growing toward". Replaces the old bare "go repeat it" notice.
+  // ---- the somatic layer ----
+  // Each practice is framed as a way to feel the day's strength/cost in the
+  // body, on the principle that gift and cost often share one sensation a
+  // notch apart, and that the sensation is weather — it comes, it goes, it
+  // isn't the self. One quality + one place per day, both optional, stored
+  // one JSON key per day (matching the practice-key pattern).
+  function readBodyNote(day) {
+    try {
+      const raw = localStorage.getItem("aa_body_day_" + day);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) { return {}; }
+  }
+  function writeBodyNote(day, note) {
+    try { localStorage.setItem("aa_body_day_" + day, JSON.stringify(note)); } catch (e) {}
+  }
+
+  function bodyCueCard(day, week) {
+    const cue = CONTENT.bodyCueForDay(day, week);
+    if (!cue) return document.createComment("no body cue");
+    return el("div", { class: "body-cue" }, [
+      el("span", { class: "body-cue-label", text: "In the body" }),
+      el("p", { class: "body-cue-text", text: cue })
+    ]);
+  }
+
+  function bodyLog(day) {
+    const wrap = el("div", { class: "card body-log" });
+    wrap.appendChild(el("h4", { text: "How the body feels" }));
+    wrap.appendChild(el("p", { class: "small-note", text:
+      "Optional. A snapshot, not a verdict — and it will have changed by tomorrow." }));
+
+    // "What has this got to do with my body?" — the answer, in place.
+    const why = el("details", { class: "body-why" });
+    why.appendChild(el("summary", { text: "Why notice the body?" }));
+    why.appendChild(el("p", { class: "body-why-text", text: CONTENT.BODY_RATIONALE.plain }));
+    wrap.appendChild(why);
+
+    // field: "quality" | "place". A free-text "something else" always sits
+    // alongside the presets — the six words are a starting point, not the
+    // whole range of what a body can feel.
+    function row(items, field, placeholder) {
+      const grid = el("div", { class: "practice-grid" });
+      const note = readBodyNote(day);
+      items.forEach((it) => {
+        const chip = el("button", {
+          type: "button",
+          class: "practice-chip" + (note[field] === it ? " active" : ""),
+          text: it
+        });
+        chip.addEventListener("click", () => {
+          const n = readBodyNote(day);
+          if (n[field] === it) delete n[field]; else n[field] = it;
+          writeBodyNote(day, n);
+          renderCycleTab();
+        });
+        grid.appendChild(chip);
+      });
+      const otherChip = el("button", {
+        type: "button",
+        class: "practice-chip" + (note[field] === "other" ? " active" : ""),
+        text: "something else…"
+      });
+      otherChip.addEventListener("click", () => {
+        const n = readBodyNote(day);
+        if (n[field] === "other") { delete n[field]; delete n[field + "Other"]; }
+        else n[field] = "other";
+        writeBodyNote(day, n);
+        renderCycleTab();
+      });
+      grid.appendChild(otherChip);
+
+      const box = el("div");
+      box.appendChild(grid);
+      if (note[field] === "other") {
+        const input = el("input", { type: "text", class: "body-other", placeholder: placeholder });
+        try { input.value = note[field + "Other"] || ""; } catch (e) {}
+        input.addEventListener("input", () => {
+          const n = readBodyNote(day);
+          n[field + "Other"] = input.value;
+          writeBodyNote(day, n);
+        });
+        box.appendChild(input);
+      }
+      return box;
+    }
+
+    wrap.appendChild(el("p", { class: "body-log-sub", text: "What it feels like" }));
+    wrap.appendChild(row(CONTENT.BODY_QUALITIES, "quality", "in your own words"));
+    wrap.appendChild(el("p", { class: "body-log-sub", text: "Where in the body" }));
+    wrap.appendChild(row(CONTENT.BODY_PLACES, "place", "somewhere else — name it"));
+    return wrap;
+  }
+
+  // Day-21: what the body reported across the three weeks. The contrast
+  // between phases is the point — same person, different weather.
+  function bodyPatternCard() {
+    const phases = [
+      { key: "gift", name: "gift", days: [1, 2, 3, 4, 5, 6, 7] },
+      { key: "cost", name: "cost", days: [8, 9, 10, 11, 12, 13, 14] },
+      { key: "others", name: "Week 3", days: [15, 16, 17, 18, 19, 20, 21] }
+    ];
+    let totalLogged = 0;
+    const rows = phases.map((ph) => {
+      const q = {}, p = {};
+      ph.days.forEach((d) => {
+        const n = readBodyNote(d);
+        if (n.quality) { q[n.quality] = (q[n.quality] || 0) + 1; totalLogged++; }
+        if (n.place) { p[n.place] = (p[n.place] || 0) + 1; }
+      });
+      const top = (o) => Object.keys(o).sort((a, b) => o[b] - o[a])[0] || null;
+      return { name: ph.name, quality: top(q), place: top(p) };
+    });
+
+    const card = el("div", { class: "card" });
+    card.appendChild(el("h4", { text: "What your body noticed" }));
+
+    if (totalLogged < 3) {
+      card.appendChild(el("p", { class: "day-text", text:
+        "You logged body notes on only a few days — not enough for a pattern yet. If you run " +
+        "another cycle, try a quick note most days: the contrast between the weeks is where it gets interesting." }));
+      return card;
+    }
+
+    const qWord = (q) => q === "other" ? "something you named yourself" : "“" + q + "”";
+    const pWord = (p) => p === "other" ? "somewhere you named yourself" : "around the " + p;
+    rows.forEach((r) => {
+      const txt = (!r.quality && !r.place)
+        ? "On your " + r.name + " days — nothing logged."
+        : "On your " + r.name + " days, most often " +
+          (r.quality ? qWord(r.quality) : "something") +
+          (r.place ? ", " + pWord(r.place) : "") + ".";
+      card.appendChild(el("p", { class: "day-text body-pattern-line", text: txt }));
+    });
+    card.appendChild(el("p", { class: "day-text", text:
+      "Same you, different weather. Neither reading is more “the real you” than the other — " +
+      "both arrived, both passed. Noticing the shift while it happens is the whole practice." }));
+    return card;
+  }
+
+  function divergenceView(s, hs) {
+    const wrap = document.createDocumentFragment();
+    const natal = computeChart(s.me, hs);
+
+    wrap.appendChild(el("h3", { text: "Your 21 days" }));
+
+    const givenSun = ASTRO.signOf(natal.positions.Sun.lon);
+    const givenMoon = ASTRO.signOf(natal.positions.Moon.lon);
+    wrap.appendChild(
+      el("div", { class: "card" }, [
+        el("h4", { text: "The chart you were given" }),
+        el("p", { class: "day-text", text:
+          "Sun in " + givenSun + ", Moon in " + givenMoon +
+          (natal.asc != null ? ", rising " + ASTRO.signOf(natal.asc) : "") +
+          ". Fixed the minute you were born — the ground you started on." })
+      ])
+    );
+
+    const inc = computeInceptionChart(s.me, s.cycle.startedAtISO, hs);
+    const startedTxt = s.cycle.startedAtISO
+      ? new Date(s.cycle.startedAtISO).toLocaleDateString()
+      : "the day you began";
+    wrap.appendChild(
+      el("div", { class: "card" }, [
+        el("h4", { text: "The chart you made" }),
+        el("p", { class: "day-text", text:
+          "Cast for the moment you pressed Start (" + startedTxt + "): Sun in " +
+          ASTRO.signOf(inc.positions.Sun.lon) + ", Moon in " + ASTRO.signOf(inc.positions.Moon.lon) +
+          ". Nobody handed you this one — you made it by turning up." })
+      ])
+    );
+
+    const choices = s.cycle.choices || {};
+    let lean = 0, counter = 0;
+    for (let d = 1; d <= 21; d++) {
+      if (choices[d] === "lean") lean++;
+      else if (choices[d] === "counter") counter++;
+    }
+    const skipped = 21 - lean - counter;
+    const dots = el("div", { class: "choice-dots" });
+    for (let d = 1; d <= 21; d++) {
+      const k = choices[d];
+      dots.appendChild(el("span", {
+        class: "choice-dot " + (k === "lean" ? "is-lean" : k === "counter" ? "is-counter" : "is-skip"),
+        title: "Day " + d + ": " + (k === "lean" ? "with the grain" : k === "counter" ? "against the grain" : "no choice logged")
+      }));
+    }
+    wrap.appendChild(
+      el("div", { class: "card" }, [
+        el("h4", { text: "The 21 choices you logged" }),
+        dots,
+        el("p", { class: "day-text", text:
+          "With the grain " + lean + " · against the grain " + counter + " · " +
+          skipped + " not logged. That string of choices is yours alone — no chart produced it." })
+      ])
+    );
+
+    wrap.appendChild(bodyPatternCard());
+
+    const twins = el("div", { class: "notice" });
+    twins.textContent =
+      "Identical twins share a birth chart to the minute. Their lives aren't identical. " +
+      "The difference is 21 days like these, repeated for years.";
+    wrap.appendChild(twins);
+
+    const nn = natal.positions.NorthNode;
+    if (nn) {
+      const nnSign = ASTRO.signOf(nn.lon);
+      wrap.appendChild(
+        el("div", { class: "card" }, [
+          el("h4", { text: "The direction you're growing toward" }),
+          el("p", { class: "day-text", text:
+            "North Node in " + nnSign + " — " + CONTENT.signFlavor(nnSign) +
+            ". Not where you already are; where the stretch is. Another 21 days is how you walk toward it." })
+        ])
+      );
+    }
+
+    wrap.appendChild(glossaryCard());
+
+    const look = el("button", { type: "button", class: "offer-btn", text: "Look back at any day" });
+    look.addEventListener("click", () => { reviewMode = true; viewDay = 1; renderCycleTab(); });
+    wrap.appendChild(look);
+
+    const again = el("button", { class: "primary-btn", type: "button", text: "Start journey " + (s.cycle.number + 1) });
+    again.style.marginTop = "8px";
+    again.addEventListener("click", () => { reviewMode = false; viewDay = null; STORE.repeatCycle("same"); renderAll(); location.hash = "#cycle"; });
+    wrap.appendChild(again);
+    const gx = el("button", { class: "primary-btn", type: "button", text: "See my Galaxy" });
+    gx.style.marginTop = "8px";
+    gx.addEventListener("click", () => { location.hash = "#galaxy"; });
+    wrap.appendChild(gx);
+
+    return wrap;
+  }
+
   function renderCycleTab() {
     const root = document.getElementById("panel-cycle");
     root.innerHTML = "";
@@ -507,46 +935,46 @@ const UI = (function () {
       return;
     }
 
-    const day = STORE.currentDay();
-    const week = weekOf(day);
+    const today = STORE.currentDay();
     const hs = getHouseSystemPref();
+
+    // First time in, nothing done yet: show the bridge from chart → journey
+    // instead of dropping straight onto Day 1.
+    if (s.cycle.completedDays.length === 0 && !journeyIntroSeen()) {
+      root.appendChild(journeyIntro());
+      return;
+    }
 
     root.appendChild(el("h2", { text: "21-Day Journey — Journey " + s.cycle.number }));
     root.appendChild(
       el("div", { class: "progress-note", text: s.cycle.completedDays.length + " of 21 days complete. Missing a day never resets your journey — come back whenever." })
     );
+    root.appendChild(glossaryCard());
 
-    if (day > 21) {
-      root.appendChild(el("div", { class: "notice", text: "You've completed this journey. Head to the Galaxy tab to repeat it." }));
+    const complete = s.cycle.completedDays.length >= 21;
+    if (!complete) reviewMode = false;
+
+    if (complete && !reviewMode) {
+      root.appendChild(divergenceView(s, hs));
       return;
     }
 
-    root.appendChild(el("h3", { text: "Day " + day + " — Week " + week + (week === 1 ? " (Your Gift)" : week === 2 ? " (The Cost of the Gift)" : " (The Others)") }));
-
-    if (week === 1 || week === 2) {
-      const body = CONTENT.WEEK_BODIES[(day - 1) % 7];
-      const chart = computeChart(s.me, hs);
-      const placement = chart.positions[body];
-      const kind = week === 1 ? "gift" : "cost";
-      const text = CONTENT.dayContent(kind, body, ASTRO.signOf(placement.lon), placement.house);
-      root.appendChild(dayCard(body + " — " + (kind === "gift" ? "the gift" : "the cost of the gift"), text, day));
-    } else {
-      root.appendChild(week3Content(day, s, hs));
+    if (complete && reviewMode) {
+      clampViewDay(21);
+      const back = el("button", { type: "button", class: "back-link", text: "← Back to summary" });
+      back.addEventListener("click", () => { reviewMode = false; viewDay = null; renderCycleTab(); });
+      root.appendChild(back);
+      root.appendChild(dayNav(viewDay, 21, null));
+      root.appendChild(dayView(viewDay, s, hs, "review"));
+      return;
     }
 
-    root.appendChild(practicePicker(day));
-
-    const doneBtn = el("button", {
-      class: "primary-btn",
-      type: "button",
-      text: s.cycle.completedDays.indexOf(day) === -1 ? "Mark today complete" : "Today already complete ✓"
-    });
-    doneBtn.disabled = s.cycle.completedDays.indexOf(day) !== -1;
-    doneBtn.addEventListener("click", () => {
-      STORE.completeDay(day);
-      renderCycleTab();
-    });
-    root.appendChild(doneBtn);
+    // Journey in progress: browsable from Day 1 up to today.
+    clampViewDay(today);
+    root.appendChild(
+      dayNav(viewDay, today, viewDay !== today ? function () { viewDay = null; renderCycleTab(); } : null)
+    );
+    root.appendChild(dayView(viewDay, s, hs, viewDay === today ? "active" : "past"));
   }
 
   function dayCard(title, text, day) {
@@ -610,31 +1038,136 @@ const UI = (function () {
     return wrap;
   }
 
-  function practicePicker(day) {
+  function practicePicker(day, week) {
     const wrap = el("div", { class: "card practice-picker" });
-    wrap.appendChild(el("h4", { text: "Pick today's practice" }));
+    wrap.appendChild(el("h4", { text: "Today's practice" }));
+
+    const suggestion = CONTENT.practiceSuggestion(day, week);
+    if (suggestion) {
+      const sug = CONTENT.PRACTICES.find((x) => x.key === suggestion.key);
+      wrap.appendChild(el("p", { class: "practice-why", text:
+        "Suggested — " + (sug ? sug.label : suggestion.key) + ". " + suggestion.why }));
+    }
+
     const key = "aa_practice_day_" + day;
-    const saved = localStorage.getItem(key);
+    const noteKey = "aa_practice_note_day_" + day;
+    let saved = null;
+    try { saved = localStorage.getItem(key); } catch (e) {}
+
     const grid = el("div", { class: "practice-grid" });
     CONTENT.PRACTICES.forEach((p) => {
+      const isSuggested = suggestion && suggestion.key === p.key;
       const btn = el("button", {
         type: "button",
-        class: "practice-chip" + (saved === p.key ? " active" : ""),
+        class: "practice-chip" + (saved === p.key ? " active" : "") + (isSuggested ? " suggested" : ""),
         title: p.desc,
         text: p.label
       });
       btn.addEventListener("click", () => {
-        localStorage.setItem(key, p.key);
+        try { localStorage.setItem(key, saved === p.key ? "" : p.key); } catch (e) {}
         renderCycleTab();
       });
       grid.appendChild(btn);
     });
+    // "My own" sits alongside the suggestions, never replacing them.
+    const customChip = el("button", {
+      type: "button",
+      class: "practice-chip" + (saved === "custom" ? " active" : ""),
+      text: "Something else…"
+    });
+    customChip.addEventListener("click", () => {
+      try { localStorage.setItem(key, saved === "custom" ? "" : "custom"); } catch (e) {}
+      renderCycleTab();
+    });
+    grid.appendChild(customChip);
     wrap.appendChild(grid);
-    if (saved) {
+
+    if (saved === "custom") {
+      const ta = el("textarea", { rows: "2", class: "practice-custom", placeholder: "Your own practice for today — a few words is enough." });
+      try { ta.value = localStorage.getItem(noteKey) || ""; } catch (e) {}
+      ta.addEventListener("input", () => { try { localStorage.setItem(noteKey, ta.value); } catch (e) {} });
+      wrap.appendChild(ta);
+    } else if (saved) {
       const p = CONTENT.PRACTICES.find((x) => x.key === saved);
       if (p) wrap.appendChild(el("p", { class: "small-note", text: p.desc }));
     }
     return wrap;
+  }
+
+  // A short line to sit with for the day — tied to the day's planet (Weeks
+  // 1–2) or the "seeing other people" theme (Week 3).
+  function dayQuoteCard(day, week) {
+    const q = CONTENT.quoteForDay(day, week);
+    if (!q) return document.createComment("no quote");
+    return el("blockquote", { class: "day-quote" }, [
+      el("p", { class: "day-quote-text", text: "“" + q.text + "”" }),
+      el("cite", { class: "day-quote-who", text: "— " + q.who })
+    ]);
+  }
+
+  // Move between any day already reached and today, without changing
+  // progress. Days ahead of today stay out of reach (the gift/cost pacing
+  // and the chart-page tile unlocks key off how many days are complete).
+  function dayNav(day, maxDay, onJumpToday) {
+    const nav = el("div", { class: "day-nav" });
+    const prev = el("button", { type: "button", class: "day-nav-arrow", text: "‹" });
+    prev.setAttribute("aria-label", "Previous day");
+    prev.disabled = day <= 1;
+    prev.addEventListener("click", () => { viewDay = day - 1; renderCycleTab(); });
+    const next = el("button", { type: "button", class: "day-nav-arrow", text: "›" });
+    next.setAttribute("aria-label", "Next day");
+    next.disabled = day >= maxDay;
+    next.addEventListener("click", () => { viewDay = day + 1; renderCycleTab(); });
+    nav.appendChild(prev);
+    nav.appendChild(el("span", { class: "day-nav-label", text: "Day " + day + " of 21 · Week " + weekOf(day) }));
+    nav.appendChild(next);
+    if (onJumpToday) {
+      const j = el("button", { type: "button", class: "day-nav-today", text: "Jump to today →" });
+      j.addEventListener("click", onJumpToday);
+      nav.appendChild(j);
+    }
+    return nav;
+  }
+
+  // One day's content, shared by the in-progress view and the post-21
+  // "look back at any day" review. mode: "active" (today, not done) shows
+  // the complete button; "past"/"review" show a completed note instead,
+  // with practice and choice still editable.
+  function dayView(day, s, hs, mode) {
+    const frag = document.createDocumentFragment();
+    const week = weekOf(day);
+    frag.appendChild(el("h3", { text: "Day " + day + " — Week " + week +
+      (week === 1 ? " (Your Gift)" : week === 2 ? " (The Cost of the Gift)" : " (The Others)") }));
+
+    if (week === 1 || week === 2) {
+      const body = CONTENT.WEEK_BODIES[(day - 1) % 7];
+      const chart = computeChart(s.me, hs);
+      const placement = chart.positions[body];
+      const kind = week === 1 ? "gift" : "cost";
+      const text = CONTENT.dayContent(kind, body, ASTRO.signOf(placement.lon), placement.house);
+      frag.appendChild(dayCard(body + " — " + (kind === "gift" ? "the gift" : "the cost of the gift"), text, day));
+    } else {
+      frag.appendChild(week3Content(day, s, hs));
+    }
+
+    frag.appendChild(dayQuoteCard(day, week));
+    frag.appendChild(bodyCueCard(day, week));
+    frag.appendChild(practicePicker(day, week));
+    frag.appendChild(bodyLog(day));
+    frag.appendChild(choiceFork(day, week));
+
+    if (mode === "active") {
+      const done = s.cycle.completedDays.indexOf(day) !== -1;
+      const doneBtn = el("button", { class: "primary-btn", type: "button",
+        text: done ? "Today already complete ✓" : "Mark today complete" });
+      doneBtn.disabled = done;
+      doneBtn.addEventListener("click", () => { STORE.completeDay(day); viewDay = null; renderCycleTab(); });
+      frag.appendChild(doneBtn);
+    } else {
+      frag.appendChild(el("p", { class: "day-done-note", text:
+        "Completed. You can still revise the practice or choice above — nothing here is locked." }));
+    }
+    return frag;
   }
 
   // ================= PEOPLE TAB (consent / invite / withdraw) =================

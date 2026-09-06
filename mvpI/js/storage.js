@@ -20,6 +20,7 @@ const STORE = (function () {
         number: 1,
         startedAtISO: null,   // for the inception chart (Week 3 solo)
         completedDays: [],     // [1..21]
+        choices: {},           // { [dayNum]: 'lean' | 'counter' } — the daily fork
         observationPersonName: null
       },
       deleted: false
@@ -31,7 +32,11 @@ const STORE = (function () {
       const raw = localStorage.getItem(KEY);
       if (!raw) return defaultState();
       const parsed = JSON.parse(raw);
-      return Object.assign(defaultState(), parsed);
+      const merged = Object.assign(defaultState(), parsed);
+      // Object.assign is shallow: a saved state from before `choices` existed
+      // would replace the whole cycle object and lose the new default.
+      merged.cycle = Object.assign(defaultState().cycle, parsed.cycle || {});
+      return merged;
     } catch (e) {
       return defaultState();
     }
@@ -89,10 +94,22 @@ const STORE = (function () {
   function currentDay() {
     return Math.min(state.cycle.completedDays.length + 1, 21);
   }
+  function recordChoice(dayNum, choice) {
+    return update((s) => {
+      if (!s.cycle.choices) s.cycle.choices = {};
+      s.cycle.choices[dayNum] = choice;
+    });
+  }
   function repeatCycle(mode) {
+    for (var d = 1; d <= 21; d++) {
+      localStorage.removeItem("aa_practice_day_" + d);
+      localStorage.removeItem("aa_practice_note_day_" + d);
+      localStorage.removeItem("aa_body_day_" + d);
+    }
     return update((s) => {
       s.cycle.number += 1;
       s.cycle.completedDays = [];
+      s.cycle.choices = {};
       s.cycle.startedAtISO = new Date().toISOString();
       if (mode === "new-circle") s.others = [];
     });
@@ -100,6 +117,14 @@ const STORE = (function () {
 
   function deleteEverything() {
     localStorage.removeItem(KEY);
+    localStorage.removeItem("aa_journey_intro_dismissed");
+    localStorage.removeItem("aa_howitworks_seen");
+    // Per-day practice picks and free-text notes are stored one key per day.
+    for (var d = 1; d <= 21; d++) {
+      localStorage.removeItem("aa_practice_day_" + d);
+      localStorage.removeItem("aa_practice_note_day_" + d);
+      localStorage.removeItem("aa_body_day_" + d);
+    }
     state = defaultState();
     state.deleted = true;
     return state;
@@ -113,6 +138,7 @@ const STORE = (function () {
     withdraw: withdraw,
     completeDay: completeDay,
     currentDay: currentDay,
+    recordChoice: recordChoice,
     repeatCycle: repeatCycle,
     deleteEverything: deleteEverything
   };

@@ -11,6 +11,39 @@
 
 const PLANNED = [
   {
+    title: "Rights / attribution pass on the daily reflection quotes before launch",
+    status: "open",
+    effort: "small",
+    inProgress: false,
+    statusLabel: "Not started — added with the daily-quote feature",
+    desc:
+      "js/content.js now carries 7 PLANET_QUOTE + 7 WEEK3_QUOTE lines shown one per journey " +
+      "day. Placeholder curation: some are paraphrased or commonly-misattributed short forms " +
+      "(e.g. the Frankl 'space between stimulus and response' line, the Durant/Aristotle " +
+      "'excellence is a habit'). Before any public release: verify each wording and " +
+      "attribution against a real source, confirm short-quotation use is fine for the ones " +
+      "still in copyright (Jung, C. S. Lewis, Pema Chödrön, Covey, Ram Dass), and let Lindsey " +
+      "swap in her own selection — the structure (quoteForDay(day, week)) stays the same, " +
+      "it's a content edit.",
+    dest: { tab: "cycle", subtab: null, scrollTo: null }
+  },
+  {
+    title: "Trim remaining journey language for users who haven't opted in (step-nav label, Galaxy brightness)",
+    status: "open",
+    effort: "small",
+    inProgress: false,
+    statusLabel: "Not started — leftover edge from the first-run context work",
+    desc:
+      "The first-run \"How this works\" screen and the demoted journey offer on the chart " +
+      "page are in (see COMPLETED). Still surfacing journey framing before a user opts in: " +
+      "(1) the top step-nav always shows a 4th step \"Journey\" even for someone who has " +
+      "never started one — consider hiding or greying it until aa_journey_intro_dismissed is " +
+      "set; (2) the Galaxy tab leads with the brightness meter and \"21 days\" copy " +
+      "regardless. Low urgency now that the two loud spots (Home teaser, chart-page CTA) are " +
+      "handled — worth a pass when touching navigation next.",
+    dest: { tab: "mychart", subtab: null, scrollTo: null }
+  },
+  {
     title: "Named-expert \"knowledge lens\" per category (Lynn Koiner, etc.) — hold until partnerships are real",
     status: "open",
     effort: "large",
@@ -192,6 +225,183 @@ const PLANNED = [
 ];
 
 const COMPLETED = [
+  {
+    date: "2026-09-06",
+    title: "Body log: free-text \"something else\" on both rows + an in-place \"why the body?\" explainer",
+    desc:
+      "Follow-up to the somatic layer, from Lindsey's chat. (1) The six quality words and the " +
+      "seven places are a starting point, not the whole range a body can feel — both rows now " +
+      "carry a 'something else…' chip that reveals a free-text input, stored as " +
+      "quality:'other' + qualityOther:'<text>' (and place/placeOther). Day-21 bodyPatternCard " +
+      "renders an 'other' top value as 'something you named yourself' / 'somewhere you named " +
+      "yourself'. Row labels also reworded from Quality/Where to 'What it feels like' / 'Where " +
+      "in the body'. (2) NEW EXPLAINER answering 'what has this got to do with my body / where " +
+      "do the stars connect to me / why feel the sensation at all': a 'Why notice the body?' " +
+      "expandable on the body-log card, plus a matching GLOSSARY entry (content.js " +
+      "BODY_RATIONALE, one string reused in both places). The answer stays non-mystical: the " +
+      "chart doesn't act on the body, it names tendencies; each tendency has a felt signature " +
+      "that precedes the thought; catching that signature is the earliest choice point, and " +
+      "watching it pass is how you stop being run by it. Verified live on 8541: 'something " +
+      "else' + text persistence on both rows, the explainer inline and in the glossary, " +
+      "Day-21 'other' phrasing — no console errors.",
+    dest: { tab: "cycle", subtab: null, scrollTo: null }
+  },
+  {
+    date: "2026-09-06",
+    title: "Somatic layer: body cue per day, one-tap body log, Day-21 body pattern",
+    desc:
+      "From Lindsey's chat vision — each practice should build felt, bodily awareness of the " +
+      "strength/cost being explored, and land the point that sensations are impermanent " +
+      "(they come and go, gift and cost often share one sensation a notch apart, neither is " +
+      "the self). Three pieces. (1) BODY CUE per day (content.js PLANET_BODY_CUE + " +
+      "WEEK3_BODY_CUE, ui.js bodyCueCard) — a short phenomenological line under the quote " +
+      "saying where that planet tends to be felt and reminding the reader it rises and " +
+      "passes; written 'you might notice', no medical/anatomical claim, disclaimer discipline " +
+      "kept. (2) BODY LOG (ui.js bodyLog) — an optional one-tap card after the practice: one " +
+      "QUALITY chip (tight/open/heavy/buzzing/calm/numb) + one WHERE chip " +
+      "(chest/gut/throat/jaw/shoulders/hands/legs), tap again to clear, stored as JSON in " +
+      "localStorage aa_body_day_N (matching the practice-key pattern), editable in review " +
+      "mode too. (3) DAY-21 PATTERN (ui.js bodyPatternCard, shown on the divergence screen " +
+      "between the choices card and the North Node) — aggregates the notes by phase and " +
+      "reports the most common quality+place for gift days vs cost days vs Week 3, closing " +
+      "with 'same you, different weather... noticing the shift while it happens is the whole " +
+      "practice.' Falls back to a gentle 'not enough logged yet' line under 3 entries. " +
+      "storage.js deleteEverything/repeatCycle also clear the body keys. Verified live on " +
+      "8541: cue per planet + Week 3, log persistence, Day-21 aggregation with a seeded set, " +
+      "low-data fallback, review-mode editing — no console errors. NOTE on Lindsey's fuller " +
+      "vision (the chart as a blueprint chosen for this lifetime, seeing impermanence to find " +
+      "the middle way): the contemplative/equanimity framing is carried in the copy " +
+      "('weather', 'comes and goes', 'neither is the real you'); the stronger metaphysical " +
+      "claim (soul-choice / lifetime blueprint) was deliberately NOT put in product copy — it " +
+      "would collide with the 'science, not esoteric' positioning and the skeptic teaser. " +
+      "Revisit if Lindsey wants that frame made explicit somewhere optional.",
+    dest: { tab: "cycle", subtab: null, scrollTo: null }
+  },
+  {
+    date: "2026-09-06",
+    title: "Journey day view: plain-language houses, suggested + custom practice, day navigation, daily quote",
+    desc:
+      "Five changes to a journey day, from user chat. (1) PLAIN-LANGUAGE HOUSES — personalize() " +
+      "in content.js was appending a bare \"— most visibly in your 7th house\" with no " +
+      "explanation; now it reads \"...and it shows up most in close one-to-one relationships " +
+      "and partnerships (7th house)\" from a new 12-entry HOUSE_MEANING map, number kept in " +
+      "parens; omitted entirely for unknown-birth-time charts. (2) SUGGESTED PRACTICE — the " +
+      "picker was a fixed list of 9 with zero tie to the day; now one practice per body is " +
+      "highlighted (CONTENT.practiceSuggestion) with a 'why this, today' line (Sun→Journaling, " +
+      "Moon→Breath, Mercury→Journaling, Venus→Cooking, Mars→Movement, Jupiter→Reading, " +
+      "Saturn→Tidying; Week 3→Reading). Other 8 stay available — a nudge, not a lock. (3) " +
+      "CUSTOM PRACTICE — a 'Something else…' chip sits alongside the list and opens a textarea " +
+      "saved to aa_practice_note_day_N. (4) DAY NAVIGATION — new dayNav + viewDay/reviewMode " +
+      "UI state lets the user move between any day already reached and today (days ahead stay " +
+      "out of reach so the gift/cost pacing and chart-page tile unlocks are unaffected); past " +
+      "days show a 'completed, still editable' note instead of the complete button; the " +
+      "Day-21 summary gets a 'Look back at any day' button into a review mode with a 'Back to " +
+      "summary' link. Shared dayView(day, mode) renders both the live and review paths. (5) " +
+      "DAILY QUOTE — dayQuoteCard shows one reflection line per day (CONTENT.quoteForDay), 7 " +
+      "planet quotes + 7 Week-3 quotes; rights/attribution pass tracked as a PLANNED item. " +
+      "storage.js deleteEverything/repeatCycle now also clear the per-day practice keys. " +
+      "Verified live on 8541: house phrasing, suggested+custom practice persistence, back/forth " +
+      "nav incl. jump-to-today, Week 3 day, unknown-time omission, and post-21 review — no " +
+      "console errors.",
+    dest: { tab: "cycle", subtab: null, scrollTo: null }
+  },
+  {
+    date: "2026-09-06",
+    title: "First-run context: \"How this works\" screen + demote the journey on the chart page",
+    desc:
+      "Follow-up to parking the Home teaser — user asked to build the two smallest pieces of " +
+      "the onboarding gap. (1) \"HOW THIS WORKS\" first-run screen (ui.js howItWorksIntro, " +
+      "shown by renderChartStep the first time the chart is reached, gated on localStorage " +
+      "aa_howitworks_seen, cleared by deleteEverything): three plain lines — we calculate " +
+      "your chart like an astronomer / it names what you're good at and what it costs / a " +
+      "21-day journey is there if you want it (~5 min/day, 3 weeks, missing a day never " +
+      "resets, entirely optional) — with \"See my chart\" as the ONLY button; the journey is " +
+      "named but not offered as an action here. (2) DEMOTED THE JOURNEY on the chart screen: " +
+      "removed the old full-width primary \"Start my 21-day journey\" button and the \"that's " +
+      "the map\" bridge; replaced with a quiet .journey-offer card at the bottom — outline " +
+      "button, time commitment stated up front, headed \"One optional next step\" (not " +
+      "started) or \"Your 21-day journey / Day N of 21 — pick up where you left off\" " +
+      "(started). The chart itself is now the only prominent thing on the page. Voice kept " +
+      "consistent with the journeyIntro() bridge copy. Verified live on port 8541: fresh " +
+      "user hits How-this-works → See my chart → chart with no primary button, just the " +
+      "outline offer; returning mid-journey user skips the intro and sees the Continue " +
+      "variant; no console errors. Leftover edges tracked in a new small PLANNED item " +
+      "(step-nav \"Journey\" label, Galaxy brightness).",
+    dest: { tab: "mychart", subtab: null, scrollTo: null }
+  },
+  {
+    date: "2026-09-06",
+    title: "Fully park the Home \"Continue my journey\" teaser (it had crept back)",
+    desc:
+      "User in chat: remove \"Continue my journey\" from the Home screen — a first-time " +
+      "astrology user meets \"Day N of 21 / your sky is X% bright / Continue my journey\" " +
+      "before anything has told them what the tool is or how the 21 days work, so it reads " +
+      "as being dropped into something they never opted into. app.js already skipped calling " +
+      "renderHomeTeaser() on the Home tab (parked once before), but it was still reachable: " +
+      "renderAll() calls it (repeat-journey and delete flows) and this session's new " +
+      "choiceFork handler had added two more renderHomeTeaser() calls, so making a daily " +
+      "choice re-injected the card into #home-teaser and it showed on the next Home visit. " +
+      "Fix: renderHomeTeaser() now clears its host and returns immediately (early return + a " +
+      "comment marking where to re-enable once a real onboarding path exists); removed the " +
+      "two choiceFork calls. Verified: mid-journey user, make a choice, run renderAll(), go " +
+      "Home — #home-teaser is empty, no \"Continue my journey\" anywhere, no console errors. " +
+      "Open follow-up (see PLANNED): the chart page still presents \"Start my 21-day " +
+      "journey\" as the main next step with only the one-line bridge as context — needs a " +
+      "proper \"how this works\" explainer before the journey is offered.",
+    dest: { tab: "home", subtab: null, scrollTo: null }
+  },
+  {
+    date: "2026-09-06",
+    title: "Bridge screen between \"My chart\" and Day 1 of the journey",
+    desc:
+      "User in chat (three times, rephrased): after reviewing the birth chart the only thing " +
+      "between it and the 21-day journey was a bare button that dropped you straight onto Day " +
+      "1 — no sense of what the journey is or why it follows from the chart. Added a proper " +
+      "transition in two places. (1) On the My chart step (ui.js renderChartStep), a short " +
+      "left-bordered bridge block above the CTA: \"That's the map. The 21-day journey is where " +
+      "you walk it\" + one line naming the three weeks. Also fixed the button label logic " +
+      "while there — it keyed on `startedAtISO`, which setMe() always sets, so a brand-new " +
+      "user still saw \"Go to my 21-day journey\"; now keyed on completedDays.length, so it's " +
+      "\"Start\" for new users and \"Continue\" once underway. (2) A full bridge screen " +
+      "(ui.js journeyIntro), shown the first time the Journey tab is opened with nothing " +
+      "completed and no dismiss flag: heading \"From your chart to your journey\", a " +
+      "chart→journey framing line, a Week 1/2/3 breakdown, a \"what a day asks of you\" card " +
+      "(read → practice → one real choice, ~5 min, missing a day never resets), the twins " +
+      "line, the plain-language glossary, and a single \"Begin Day 1\" button that sets " +
+      "localStorage aa_journey_intro_dismissed and renders Day 1. Returning users on journey " +
+      "2+ skip straight to the day; STORE.deleteEverything() also clears the flag so a fresh " +
+      "start sees the intro again. Verified live on port 8541: fresh user sees the bridge on " +
+      "both screens, Begin Day 1 lands on \"Day 1 — Week 1\", re-render doesn't re-show it, " +
+      "no console errors.",
+    dest: { tab: "cycle", subtab: null, scrollTo: null }
+  },
+  {
+    date: "2026-09-06",
+    title: "Journey: daily choice-fork + Day-21 \"divergence\" screen + plain-language toolkit",
+    desc:
+      "User's framing in chat: the birth chart is a map of the ground you start on, but every " +
+      "choice is you turning the wheel — which is why twins with near-identical charts live " +
+      "totally different lives. Wanted that made concrete in the 21-day journey, plus a " +
+      "toolkit so a newcomer with zero astrology knowledge isn't blocked by words like " +
+      "\"inception chart\". Built three things: (1) a daily CHOICE FORK — after each day's " +
+      "gift/cost reading, one real either/or, with the grain of your chart or deliberately " +
+      "against it (CONTENT.BODY_EXPERIMENT per body for Weeks 1-2, CONTENT.WEEK3_FORKS for " +
+      "Week 3), stored in cycle.choices in localStorage via STORE.recordChoice(day, choice); " +
+      "tapping the active option again clears it; nothing is \"right\", the point is it's " +
+      "logged. (2) DAY-21 DIVERGENCE SCREEN (ui.js divergenceView) shown once all 21 days are " +
+      "complete, replacing the old dead \"go repeat it\" notice (its `day > 21` guard was " +
+      "unreachable — currentDay() caps at 21; now keyed on completedDays.length >= 21): the " +
+      "natal chart (\"the chart you were given\") vs. the inception chart (\"the chart you " +
+      "made by turning up\"), a 21-dot strip of the choices logged with a with-grain / " +
+      "against-grain tally, the twins line as copy, and the North Node as \"the direction " +
+      "you're growing toward\" leading into Start journey N+1. (3) TOOLKIT — CONTENT.GLOSSARY, " +
+      "12 terms each with a five-year-old \"plain\" line and a one-line \"real\" line tying " +
+      "back to the astronomy, rendered as a collapsed <details> at the top of the Journey tab " +
+      "and on the divergence screen. Verified live on port 8541: fork records/toggles per " +
+      "body (Day 3 = Mercury options), divergence screen renders with a seeded 21-day state, " +
+      "no console errors.",
+    dest: { tab: "cycle", subtab: null, scrollTo: null }
+  },
   {
     date: "2026-09-06",
     title: "No-commitment skeptic teaser: one real chart fact from just a birth date",

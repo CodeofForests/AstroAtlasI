@@ -50,6 +50,112 @@ const CONTENT = (function () {
     }
   };
 
+  // The daily fork. Each Week 1/2 day, after reading the gift (or its cost),
+  // the user picks ONE real move to make today: go WITH the grain of their
+  // chart, or deliberately AGAINST it. Neither is "right" — the point is that
+  // the choice is theirs and it gets logged. Twenty-one logged choices are
+  // the thing no birth chart predicted, which is exactly the map-vs-traveller
+  // idea made concrete (see GLOSSARY "the map and you").
+  const BODY_EXPERIMENT = {
+    Sun:     { prompt: "Your Sun sets its own direction. In one real moment today:",
+               lean: "I picked the direction and said so out loud",
+               counter: "I let someone else pick — on purpose" },
+    Moon:    { prompt: "Your Moon feels the room and tends it. In one real moment today:",
+               lean: "I looked after how someone felt",
+               counter: "I let a mood in the room just be, without fixing it" },
+    Mercury: { prompt: "Your Mercury circles a problem from every side. In one real moment today:",
+               lean: "I explored every angle before answering",
+               counter: "I gave one plain answer and stopped" },
+    Venus:   { prompt: "Your Venus keeps things warm and smooth. In one real moment today:",
+               lean: "I made a moment feel easy and kind",
+               counter: "I let a small disagreement stay in the room" },
+    Mars:    { prompt: "Your Mars moves first. In one real moment today:",
+               lean: "I started the thing without waiting",
+               counter: "I waited one beat before acting — on purpose" },
+    Jupiter: { prompt: "Your Jupiter makes things feel big and possible. In one real moment today:",
+               lean: "I made something feel bigger and possible",
+               counter: "I named the small next step instead of the big vision" },
+    Saturn:  { prompt: "Your Saturn does the solid, structural work. In one real moment today:",
+               lean: "I did the unglamorous work that holds things up",
+               counter: "I rested before I'd 'earned' it — on purpose" }
+  };
+
+  // Week 3 forks (Days 15–21) — same two-option shape, pointed at other
+  // people instead of a chart body. "lean" = your usual move, "counter" =
+  // deliberately the opposite, so the Day-21 tally reads the same way.
+  const WEEK3_FORKS = [
+    { prompt: "A person you find difficult. Today:",
+      lean: "I responded the way I always do", counter: "I tried the opposite of my usual move" },
+    { prompt: "Someone asked something of you. Today:",
+      lean: "I answered from habit", counter: "I paused and chose fresh" },
+    { prompt: "A person you've quietly labelled in your head. Today:",
+      lean: "I let the label stand", counter: "I looked for where the label is wrong" },
+    { prompt: "Credit for something you did together. Today:",
+      lean: "I took my usual share", counter: "I gave more of it away than felt natural" },
+    { prompt: "A disagreement. Today:",
+      lean: "I pushed for my side", counter: "I argued their side back to them first" },
+    { prompt: "Someone's way of doing a thing that isn't your way. Today:",
+      lean: "I did it my way", counter: "I did it their way once, fully" },
+    { prompt: "The person from Day 15 you found difficult — look again. Today:",
+      lean: "Same as before", counter: "Something shifted" }
+  ];
+
+  function experimentFor(body) {
+    return BODY_EXPERIMENT[body] || null;
+  }
+  function week3Fork(day) {
+    return WEEK3_FORKS[(day - 15) % WEEK3_FORKS.length] || null;
+  }
+
+  // Plain-language toolkit. Every entry has a "plain" line written so a
+  // five-year-old could follow it, and a "real" line tying it back to the
+  // actual astronomy — so a newcomer is never blocked by a word, and the
+  // "this is computed like an astronomer" positioning still holds.
+  const GLOSSARY = [
+    { term: "Birth chart",
+      plain: "A picture of where the Sun, Moon and planets sat in the sky at the exact minute you were born — like a photo of the sky taken from your first breath.",
+      real: "We compute it the way an astronomer would, from your date, time and place." },
+    { term: "Inception chart",
+      plain: "The same kind of sky-photo, but for the moment you pressed Start on Day 1 — a picture of a moment you chose, not one you were handed.",
+      real: "Your birth chart you were given; this one you made by showing up today." },
+    { term: "Why 21 days",
+      plain: "Long enough to try something new every day and actually feel it change; short enough that you can see the finish line from the start.",
+      real: "Three weeks: one for your strengths, one for their costs, one for the people around you." },
+    { term: "Sign (Aries, Leo…)",
+      plain: "Which slice of sky a planet was sitting in. Picture the sky as a wheel cut into 12 named slices, each with its own flavour.",
+      real: "The zodiac — 12 equal 30° segments along the Sun's yearly path." },
+    { term: "House",
+      plain: "Which room of your life a planet shows up in most — a 'money room', a 'friends room', a 'home room'. There are 12 rooms.",
+      real: "The 12 houses, set by the exact time and place of birth." },
+    { term: "Aspect",
+      plain: "When two planets sit at a special angle to each other, so they work as a team — or argue.",
+      real: "Angular links like conjunction (0°), square (90°), trine (120°)." },
+    { term: "Planet / body",
+      plain: "Each one stands for a part of you: the Sun is who you are, the Moon is what you need to feel safe, Mars is how you go after things.",
+      real: "The journey uses the classical seven; the outer planets describe whole generations more than one person." },
+    { term: "Gift and cost",
+      plain: "Every strength has a price tag. The thing you're great at is the same thing that trips you up — so we always show them together.",
+      real: "Week 1 is the gift; Week 2 is that same gift's cost — never a separate list of flaws." },
+    { term: "Your Galaxy",
+      plain: "You're one star. People you add — only if they say yes — are other stars. Together you make a little galaxy.",
+      real: "A midpoint composite chart of everyone who has consented." },
+    { term: "Brightness",
+      plain: "How much of the journey you've taken in. It goes up when you look at a gift and its cost together, and you can't buy it.",
+      real: "Earned only by completing days; never purchasable." },
+    { term: "North Node / South Node",
+      plain: "The South Node is the move you already know by heart. The North Node is the direction you're still growing toward — the stretch.",
+      real: "The two points where the Moon's path crosses the Sun's." },
+    { term: "The map and you",
+      plain: "Your chart is a map of the ground you started on. It doesn't drive the car. Every choice you make is you turning the wheel — which is why twins with almost the same chart still live totally different lives.",
+      real: "The chart describes tendencies, not a fixed future. Nothing here predicts what will happen." },
+    { term: "Why notice the body?",
+      plain: "Your chart doesn't act on your body. What it names is a handful of tendencies — ways you reliably lean. Each one has a felt signature: when your “act first” tendency fires, something moves in your chest and hands before you've decided anything. That sensation is the earliest sign a pattern is running — sooner than the thought, sooner than the action. Learn its signature and you get a choice you didn't have before. And because it always passes, you also see it isn't you — just weather moving through.",
+      real: "The chart points to tendencies; a tendency has a body signature that precedes the thought. Noticing it is the earliest point you can catch the pattern — and watching it pass is how you stop being run by it." }
+  ];
+  // Same words, reused inline on the body-log card so the explanation is
+  // said once and stays consistent wherever it appears.
+  const BODY_RATIONALE = GLOSSARY[GLOSSARY.length - 1];
+
   // Third-person variants for Week 3 "noticing someone else" — written
   // separately rather than pronoun-swapped from BODY_CORE.gift, which reads
   // grammatically broken once regex-substituted ("who them are").
@@ -83,10 +189,34 @@ const CONTENT = (function () {
     return n + (s[(v - 20) % 10] || s[v] || s[0]);
   }
 
+  // One plain-language phrase per house, so "your 7th house" never appears on
+  // its own to someone who has never used astrology. The number stays in
+  // parentheses for people who do know it.
+  const HOUSE_MEANING = {
+    1: "how you come across and your first move in anything",
+    2: "money, belongings, and what you treat as worth having",
+    3: "everyday talk, learning, and the people right around you",
+    4: "home, family, and where you come from",
+    5: "play, creativity, romance, and self-expression",
+    6: "daily work, health, and the routines that hold your days together",
+    7: "close one-to-one relationships and partnerships",
+    8: "trust, intimacy, shared money, and deep change",
+    9: "beliefs, travel, and the bigger picture you live by",
+    10: "your work in the world, your reputation, and public role",
+    11: "friends, groups, and what you're aiming for long-term",
+    12: "solitude, the inner life, and what stays behind the scenes"
+  };
+  function houseMeaning(house) {
+    return HOUSE_MEANING[house] || null;
+  }
+
   function personalize(baseText, sign, house) {
     const flavor = SIGN_FLAVOR[sign] || "its own particular way";
-    const houseText = house ? ` — most visibly in your ${ordinal(house)} house` : "";
-    return baseText + ` For you, this comes through as ${flavor} (${sign})${houseText}.`;
+    let tail = ` For you, this comes through as ${flavor} (${sign})`;
+    if (house && HOUSE_MEANING[house]) {
+      tail += `, and it shows up most in ${HOUSE_MEANING[house]} (${ordinal(house)} house)`;
+    }
+    return baseText + tail + ".";
   }
 
   function dayContent(kind, body, sign, house) {
@@ -107,6 +237,79 @@ const CONTENT = (function () {
     { key: "music", label: "Music", desc: "Feeling something without needing words for it yet." },
     { key: "novelty", label: "Changing your surroundings", desc: "Novelty interrupting autopilot — a different route home, an unfamiliar part of your own city, a café you'd normally walk past." }
   ];
+
+  // One practice per body is highlighted as "suggested for today", with a
+  // line saying why it fits — so the picker stops feeling like a random list.
+  // The other eight stay available; this is a nudge, not a lock. Week 1 and
+  // Week 2 share a body, so the suggestion carries across both.
+  const PRACTICE_SUGGESTION = {
+    Sun:     { key: "journaling", why: "The Sun is who you are at the core — write yourself down when no one's watching." },
+    Moon:    { key: "breath",     why: "The Moon is what settles you — slow breathing is the quickest way back to it." },
+    Mercury: { key: "journaling", why: "Mercury is how you think — on paper you can see the shape of it." },
+    Venus:   { key: "cooking",    why: "Venus is what you find worth wanting — make something good with your hands, for someone." },
+    Mars:    { key: "movement",   why: "Mars is how you take action — move, and notice where the impulse actually lives." },
+    Jupiter: { key: "reading",    why: "Jupiter is where you reach — an hour inside someone else's thinking stretches it further." },
+    Saturn:  { key: "tidying",    why: "Saturn is the structural work — set one small part of your space in order." }
+  };
+  const WEEK3_SUGGESTION = { key: "reading", why: "Week 3 is about other people — reading is sustained time inside another person's interior." };
+
+  function practiceSuggestion(day, week) {
+    if (week === 3) return WEEK3_SUGGESTION;
+    return PRACTICE_SUGGESTION[WEEK_BODIES[(day - 1) % 7]] || null;
+  }
+
+  // A short line for the day to sit with. Tied to the body (Weeks 1–2) or to
+  // the "seeing other people" theme (Week 3). MVP note: these need a proper
+  // rights/attribution pass before launch — tracked on the Construction Site.
+  const PLANET_QUOTE = {
+    Sun:     { text: "The privilege of a lifetime is to become who you truly are.", who: "Carl Jung" },
+    Moon:    { text: "Nothing ever goes away until it has taught us what we need to know.", who: "Pema Chödrön" },
+    Mercury: { text: "It is the mark of an educated mind to entertain a thought without accepting it.", who: "Aristotle" },
+    Venus:   { text: "To love at all is to be vulnerable.", who: "C. S. Lewis" },
+    Mars:    { text: "Well done is better than well said.", who: "Benjamin Franklin" },
+    Jupiter: { text: "He who has a why to live can bear almost any how.", who: "Friedrich Nietzsche" },
+    Saturn:  { text: "Excellence is not an act, but a habit.", who: "Will Durant" }
+  };
+  const WEEK3_QUOTE = [
+    { text: "Everyone you meet is fighting a battle you know nothing about. Be kind.", who: "Ian Maclaren" },
+    { text: "We don't see things as they are; we see them as we are.", who: "Anaïs Nin" },
+    { text: "Between stimulus and response there is a space, and in that space is our freedom.", who: "Viktor Frankl" },
+    { text: "No act of kindness, no matter how small, is ever wasted.", who: "Aesop" },
+    { text: "Seek first to understand, then to be understood.", who: "Stephen Covey" },
+    { text: "If you want to go fast, go alone. If you want to go far, go together.", who: "African proverb" },
+    { text: "We are all just walking each other home.", who: "Ram Dass" }
+  ];
+  function quoteForDay(day, week) {
+    if (week === 3) return WEEK3_QUOTE[(day - 15) % WEEK3_QUOTE.length];
+    return PLANET_QUOTE[WEEK_BODIES[(day - 1) % 7]] || null;
+  }
+
+  // Where each planet's gift/cost tends to be *felt*, not thought. Written
+  // phenomenologically ("you might notice"), never as medical or anatomical
+  // claim. Each line also carries the point of the whole exercise: the
+  // sensation arrives and passes on its own — it is weather, not identity.
+  const PLANET_BODY_CUE = {
+    Sun:     "The Sun is often felt high and central — the sternum, a lift behind the eyes; or a flatness there when it's missing. Watch it rise and settle. It isn't fixed.",
+    Moon:    "The Moon tends to sit low and soft — the belly, the throat, the back of the chest. Whatever's there moves through in waves if you let it.",
+    Mercury: "Mercury is quick and up top — jaw, temples, a buzz in the hands, breath high in the chest. It speeds and slows on its own.",
+    Venus:   "Venus is warmth on the surface — the face, the chest, the palms; a softening, or a held smile that quietly costs something. Notice it come, notice it go.",
+    Mars:    "Mars runs hot and forward — heat in the chest and hands, a set jaw, a lean in the legs. Feel it surge. Then feel it pass.",
+    Jupiter: "Jupiter expands — a widening in the ribs, breath that wants more room; or a heaviness when the reach overshot. It swells and recedes.",
+    Saturn:  "Saturn is weight and holding — the shoulders, the lower back, a bracing in the belly. You can set it down. It returns. That's fine."
+  };
+  const WEEK3_BODY_CUE =
+    "With another person in mind, notice the body first — where you tighten, lean away, soften, or brace. It shifts as they shift, and as you do.";
+
+  function bodyCueForDay(day, week) {
+    if (week === 3) return WEEK3_BODY_CUE;
+    return PLANET_BODY_CUE[WEEK_BODIES[(day - 1) % 7]] || null;
+  }
+
+  // Vocabulary for the one-tap body log. Kept small and plain so a first-time
+  // user isn't asked to introspect in jargon. One quality + one place, both
+  // optional — a snapshot, never a verdict.
+  const BODY_QUALITIES = ["tight", "open", "heavy", "buzzing", "calm", "numb"];
+  const BODY_PLACES = ["chest", "gut", "throat", "jaw", "shoulders", "hands", "legs"];
 
   function noticeContent(body, name, sign) {
     const core = NOTICE_CORE[body];
@@ -225,11 +428,30 @@ const CONTENT = (function () {
     };
   }
 
+  function signFlavor(sign) {
+    return SIGN_FLAVOR[sign] || "its own particular way";
+  }
+  function bodyEssence(body) {
+    return BODY_ESSENCE[body] || null;
+  }
+
   return {
     WEEK_BODIES: WEEK_BODIES,
     BODY_CORE: BODY_CORE,
     PRACTICES: PRACTICES,
+    GLOSSARY: GLOSSARY,
     dayContent: dayContent,
+    experimentFor: experimentFor,
+    week3Fork: week3Fork,
+    practiceSuggestion: practiceSuggestion,
+    quoteForDay: quoteForDay,
+    bodyCueForDay: bodyCueForDay,
+    BODY_QUALITIES: BODY_QUALITIES,
+    BODY_PLACES: BODY_PLACES,
+    BODY_RATIONALE: BODY_RATIONALE,
+    houseMeaning: houseMeaning,
+    signFlavor: signFlavor,
+    bodyEssence: bodyEssence,
     teaserReveal: teaserReveal,
     noticeContent: noticeContent,
     domainReveal: domainReveal
