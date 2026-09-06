@@ -167,11 +167,70 @@ const CONTENT = (function () {
     return null;
   }
 
+  // Short, non-paragraph phrases for the no-commitment teaser — what a
+  // body is fundamentally "about," compact enough to slot into one
+  // sentence naming a specific real aspect from the visitor's own chart.
+  const BODY_ESSENCE = {
+    Sun: "who you are at the core",
+    Moon: "what you need to feel safe",
+    Mercury: "how you think and talk",
+    Venus: "what you find worth wanting",
+    Mars: "how you take action",
+    Jupiter: "where you overreach, or grow",
+    Saturn: "where you've had to grow up fast",
+    Uranus: "where you break your own rules",
+    Neptune: "where reality gets blurry for you",
+    Pluto: "what you can't help transforming",
+    Chiron: "the wound you keep teaching from",
+    NorthNode: "the direction you're growing toward",
+    SouthNode: "the pattern you already know too well"
+  };
+
+  const ASPECT_FRAME = {
+    Conjunction: "fuse into a single impulse",
+    Sextile: "quietly back each other up",
+    Square: "grind against each other",
+    Trine: "flow together almost too easily",
+    Opposition: "pull you in two directions at once"
+  };
+
+  // Teaser for the skeptical/curious first-time visitor: needs ONLY a
+  // birth date (no time, no place) since a body's zodiac sign and the
+  // aspects between bodies don't depend on either — houses and the
+  // Ascendant do, but those aren't used here. Picks the visitor's single
+  // tightest-orb aspect (the most exact, most "real" fact in their chart)
+  // rather than a generic sun-sign line, so it reads as specific to them.
+  function teaserReveal(wall) {
+    const utcDate = new Date(Date.UTC(wall.year, wall.month - 1, wall.day, 12, 0, 0));
+    const { positions } = ASTRO.computePositions(utcDate);
+    const aspects = ASTRO.computeAspects(positions);
+
+    if (aspects.length === 0) {
+      const sunSign = ASTRO.signOf(positions.Sun.lon);
+      return {
+        heading: "Sun in " + sunSign,
+        text: "Even with just your birth date: your Sun is in " + sunSign + " — " + SIGN_FLAVOR[sunSign] + "."
+      };
+    }
+
+    let tightest = aspects[0];
+    aspects.forEach((a) => { if (a.orb < tightest.orb) tightest = a; });
+    const frame = ASPECT_FRAME[tightest.aspect] || "shape each other";
+    return {
+      heading: tightest.a + " " + tightest.symbol + " " + tightest.b,
+      text:
+        "Your " + tightest.a + " and " + tightest.b + " are in " + tightest.aspect.toLowerCase() +
+        ", only " + tightest.orb + "° from exact: " + BODY_ESSENCE[tightest.a] + ", and " +
+        BODY_ESSENCE[tightest.b] + " — " + frame + "."
+    };
+  }
+
   return {
     WEEK_BODIES: WEEK_BODIES,
     BODY_CORE: BODY_CORE,
     PRACTICES: PRACTICES,
     dayContent: dayContent,
+    teaserReveal: teaserReveal,
     noticeContent: noticeContent,
     domainReveal: domainReveal
   };

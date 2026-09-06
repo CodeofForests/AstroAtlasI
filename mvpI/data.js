@@ -11,6 +11,27 @@
 
 const PLANNED = [
   {
+    title: "Named-expert \"knowledge lens\" per category (Lynn Koiner, etc.) — hold until partnerships are real",
+    status: "open",
+    effort: "large",
+    inProgress: false,
+    statusLabel: "Held — needs real agreements first",
+    desc:
+      "User's idea in chat: attach a named, famous guide to each category's approach — Lynn " +
+      "Koiner + Pema Chödrön for Myself, Harville Hendrix for Relationship, a yoga teacher " +
+      "(Travis) for Health, Naval Ravikant for Job — so the app reads as curated by known " +
+      "experts, not generic. Recommended holding real names until actual partnership " +
+      "agreements exist: using a living public figure's name/framework to imply endorsement " +
+      "or involvement they haven't agreed to is a real legal exposure (right of publicity, " +
+      "implied endorsement) and risks reading as unverified guru name-dropping — working " +
+      "against the \"science, not esoteric\" positioning already built. Agreed path: build a " +
+      "distinct, unnamed \"lens\" per category now (e.g. a psychodynamic lens for Relationship, " +
+      "a stoic/practical lens for Job) so the structure supports swapping in a real name and " +
+      "citing their specific method the moment an agreement (e.g. with Lynn Koiner, who the " +
+      "user knows personally) is actually signed — a content change at that point, not an " +
+      "architecture change."
+  },
+  {
     title: "Bring Daily Practice / Galaxy back onto Home now that categories are life-domains",
     status: "open",
     effort: "small",
@@ -171,6 +192,27 @@ const PLANNED = [
 ];
 
 const COMPLETED = [
+  {
+    date: "2026-09-06",
+    title: "No-commitment skeptic teaser: one real chart fact from just a birth date",
+    desc:
+      "User's idea for winning over skeptics on first contact: let them try the app before " +
+      "committing to anything. Added a \"Not sure yet? Try a free 10-second reading\" link on " +
+      "Home, leading to a screen that asks for ONLY a birth date — no time, no place, no " +
+      "account, and nothing saved to STORE. Works because a body's zodiac sign and the aspects " +
+      "between bodies don't depend on birth time or location — only houses and the Ascendant " +
+      "do, and those aren't used here (CONTENT.teaserReveal in content.js computes positions " +
+      "at noon UTC on the given date and picks the visitor's single tightest-orb aspect — the " +
+      "most exact, most \"real\" fact in their chart — rather than a generic sun-sign line). " +
+      "Verified live: a 16 Aug 1985 test date surfaced \"Your Mercury and Mars are in " +
+      "conjunction, only 0.02° from exact\" — specific and sharp, not a horoscope-column line. " +
+      "Clicking through carries the entered date into the full birth-data form (added an " +
+      "optional prefillDate param to ui.js's birthForm) so trying it never means re-typing " +
+      "anything. Also discussed and deliberately deferred: attaching named real experts (Lynn " +
+      "Koiner, Pema Chödrön, Harville Hendrix, Naval Ravikant) to each category — see the held " +
+      "PLANNED item for the legal/positioning reasoning.",
+    dest: { tab: "home", subtab: null, scrollTo: null }
+  },
   {
     date: "2026-09-05",
     title: "Home: life-domain categories (Myself/Relationship/Job/Health) with per-domain reveals",

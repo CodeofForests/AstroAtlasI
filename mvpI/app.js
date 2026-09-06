@@ -421,6 +421,7 @@
       // Re-enable by adding: if (typeof UI !== "undefined") UI.renderHomeTeaser();
     }
     if (name === "domain") renderDomainReveal();
+    if (name === "teaser") renderSkepticTeaser();
     if (UI_RENDERERS[name]) UI_RENDERERS[name]();
   }
 
@@ -498,6 +499,62 @@
     ctaBtn.addEventListener("click", () => { location.hash = "#" + cta.target; });
     root.appendChild(ctaBtn);
   }
+
+  // No-commitment teaser for skeptical first-time visitors: no account, no
+  // full birth data — just a date. Deliberately does NOT touch STORE/setMe,
+  // so trying this never counts as "starting" anything; only clicking
+  // through to the full form does. Carries the entered date over via
+  // window.teaserPrefillWall (this file and ui.js are separate IIFEs, so a
+  // plain local variable wouldn't be visible from ui.js's renderBirthDataStep).
+  window.teaserPrefillWall = null;
+
+  function renderSkepticTeaser() {
+    const root = document.getElementById("panel-teaser");
+    root.innerHTML = "";
+
+    const back = el("button", { type: "button", class: "back-link", text: "← Back" });
+    back.addEventListener("click", () => { location.hash = "#home"; });
+    root.appendChild(back);
+
+    const card = el("div", { class: "card" });
+    card.appendChild(el("h2", { text: "Try it free — no account, just a date" }));
+    card.appendChild(
+      el("p", { class: "small-note", text: "Your birth date alone is enough for one real, specific fact from your chart. No time or place needed for this part." })
+    );
+
+    const dateInput = el("input", { type: "date" });
+    card.appendChild(el("div", { class: "field-row" }, [dateInput]));
+
+    const resultHost = el("div", { class: "teaser-result-host" });
+    const revealBtn = el("button", { type: "button", class: "primary-btn", text: "Reveal something about me" });
+    revealBtn.addEventListener("click", () => {
+      if (!dateInput.value) return;
+      const [y, m, d] = dateInput.value.split("-").map(Number);
+      const wall = { year: y, month: m, day: d };
+      const reveal = CONTENT.teaserReveal(wall);
+
+      resultHost.innerHTML = "";
+      const resultCard = el("div", { class: "card teaser-result" });
+      resultCard.appendChild(el("p", { class: "domain-heading", text: reveal.heading }));
+      resultCard.appendChild(el("p", { class: "day-text", text: reveal.text }));
+      resultHost.appendChild(resultCard);
+
+      const cta = el("button", { type: "button", class: "primary-btn", text: "Curious what else my chart says? →" });
+      cta.addEventListener("click", () => {
+        window.teaserPrefillWall = wall;
+        location.hash = "#birthdata";
+      });
+      resultHost.appendChild(cta);
+    });
+
+    card.appendChild(revealBtn);
+    root.appendChild(card);
+    root.appendChild(resultHost);
+  }
+
+  document.getElementById("skeptic-teaser-link").addEventListener("click", () => {
+    location.hash = "#teaser";
+  });
 
   document.getElementById("account-btn").addEventListener("click", () => {
     document.getElementById("account-drawer").dataset.open = "1";

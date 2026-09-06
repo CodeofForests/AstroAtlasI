@@ -381,6 +381,22 @@ body.is-home main { max-width: none; padding: 0; }
   margin: 4px 0 10px;
 }
 
+/* ---- Skeptic teaser (no-commitment, date-only) ---- */
+
+.skeptic-link {
+  background: none;
+  border: none;
+  color: var(--text-faint);
+  font-size: 12.5px;
+  text-decoration: underline;
+  cursor: pointer;
+  margin-top: 18px;
+  padding: 4px;
+}
+.skeptic-link:hover { color: var(--text-dim); }
+.teaser-result-host { margin-top: 14px; }
+.teaser-result { border-color: var(--accent-dim); }
+
 section.cs-section { margin-bottom: 36px; }
 
 section.cs-section h2 {

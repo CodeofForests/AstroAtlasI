@@ -51,6 +51,11 @@ const UI = (function () {
     root.innerHTML = "";
     const s = STORE.get();
 
+    // A date entered on the no-commitment teaser (see app.js) carries over
+    // once, so trying it doesn't mean re-typing the same date again.
+    const prefill = !s.me ? window.teaserPrefillWall || null : null;
+    window.teaserPrefillWall = null;
+
     const formCard = birthForm(
       (profile) => {
         STORE.setMe(profile);
@@ -58,7 +63,8 @@ const UI = (function () {
       },
       s.me ? "Update your birth details" : "Enter your birth details",
       s.me ? "Save changes" : "Calculate my chart",
-      s.me
+      s.me,
+      prefill
     );
     if (s.me) {
       const cancelBtn = el("button", { type: "button", class: "cancel-btn", text: "Cancel" });
@@ -200,7 +206,7 @@ const UI = (function () {
     return String(n).padStart(2, "0");
   }
 
-  function birthForm(onSubmit, title, submitLabel, existing) {
+  function birthForm(onSubmit, title, submitLabel, existing, prefillDate) {
     const wrap = el("div", { class: "card form-card" });
     wrap.appendChild(el("h3", { text: title }));
     wrap.appendChild(
@@ -250,6 +256,8 @@ const UI = (function () {
       lonInput.value = existing.place.lon;
       zoneInput.value = existing.place.zone;
       timeInput.disabled = !!existing.unknownTime;
+    } else if (prefillDate) {
+      dateInput.value = prefillDate.year + "-" + pad2(prefillDate.month) + "-" + pad2(prefillDate.day);
     }
 
     timeInput.disabled = false;
