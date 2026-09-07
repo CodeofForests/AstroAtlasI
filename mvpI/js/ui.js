@@ -657,9 +657,6 @@ const UI = (function () {
       frag.appendChild(el("h4", { class: "review-week-head", text: "Week " + w + " · " + WEEK_TITLE[w] }));
       for (let i = 0; i < 7; i++) {
         const d = (w - 1) * 7 + i + 1;
-        const choices = s.cycle.choices || {};
-        const k = choices[d];
-        const choiceTxt = k === "lean" ? "with the grain" : k === "counter" ? "against the grain" : "no choice logged";
         let theme;
         if (w === 3) {
           theme = "the people in your life";
@@ -670,10 +667,11 @@ const UI = (function () {
         }
         let practice = null;
         try { practice = localStorage.getItem("aa_practice_day_" + d); } catch (e) {}
+        const done = s.cycle.completedDays.indexOf(d) !== -1;
         const row = el("button", { type: "button", class: "review-row" }, [
           el("span", { class: "review-row-day", text: "Day " + d }),
           el("span", { class: "review-row-theme", text: theme }),
-          el("span", { class: "review-row-meta", text: choiceTxt + (practice ? " · " + practice : "") })
+          el("span", { class: "review-row-meta", text: (done ? "done" : "not done") + (practice ? " · " + practice : "") })
         ]);
         row.addEventListener("click", () => {
           reviewAll = false; reviewMode = true; viewDay = d; renderCycleTab();
@@ -1097,15 +1095,16 @@ const UI = (function () {
       el("div", { class: "card" }, [
         el("h4", { text: "What a day asks of you" }),
         el("p", { class: "day-text", text:
-          "A short read, then pick a practice, then make one real choice — go with the grain of your " +
-          "chart, or deliberately against it. About five minutes. Miss a day and nothing resets — come back whenever." })
+          "A short read, a line to sit with, one small practice, and a note on how it landed in the body. " +
+          "About five minutes. Miss a day and nothing resets — come back whenever." })
       ])
     );
 
     const twins = el("div", { class: "notice" });
     twins.textContent =
-      "Identical twins share a birth chart. Their lives still diverge — because of choices like these. " +
-      "The chart is the map; this is the part that's yours.";
+      "Identical twins share a birth chart to the minute — and still live different lives. " +
+      "The chart is the ground you start on; what you do with it, day to day, is yours. " +
+      "That is what the next 21 days are for.";
     frag.appendChild(twins);
 
     frag.appendChild(glossaryCard());
@@ -1118,40 +1117,6 @@ const UI = (function () {
     });
     frag.appendChild(begin);
     return frag;
-  }
-
-  // The daily fork: after reading the day's gift/cost, pick one real move —
-  // with the grain of your chart, or deliberately against it. Logged either
-  // way. Tapping the active option again clears it.
-  function choiceFork(day, week) {
-    const fork = week === 3
-      ? CONTENT.week3Fork(day)
-      : CONTENT.experimentFor(CONTENT.WEEK_BODIES[(day - 1) % 7]);
-    if (!fork) return document.createComment("no fork");
-
-    const s = STORE.get();
-    const chosen = (s.cycle.choices || {})[day] || null;
-    const wrap = el("div", { class: "card fork" });
-    wrap.appendChild(el("h4", { text: "Today's choice" }));
-    wrap.appendChild(el("p", { class: "day-text", text: fork.prompt }));
-
-    const opts = el("div", { class: "fork-opts" });
-    [["lean", fork.lean], ["counter", fork.counter]].forEach(([key, label]) => {
-      const b = el("button", {
-        type: "button",
-        class: "fork-opt" + (chosen === key ? " active" : ""),
-        text: label
-      });
-      b.addEventListener("click", () => {
-        STORE.recordChoice(day, chosen === key ? null : key);
-        renderCycleTab();
-      });
-      opts.appendChild(b);
-    });
-    wrap.appendChild(opts);
-    wrap.appendChild(el("p", { class: "small-note", text:
-      "Neither is right. Whichever you pick, it goes in your log — that's the part no birth chart decided." }));
-    return wrap;
   }
 
   // Day-21 payoff: the chart you were handed vs. the one you made by showing
@@ -1182,11 +1147,14 @@ const UI = (function () {
     ]);
   }
 
-  function bodyLog(day) {
+  function bodyLog(day, week) {
     const wrap = el("div", { class: "card body-log" });
     wrap.appendChild(el("h4", { text: "How the body feels" }));
     wrap.appendChild(el("p", { class: "small-note", text:
       "Optional. A snapshot, not a verdict — and it will have changed by tomorrow." }));
+
+    // Where this day's planet tends to be felt — context for the log below.
+    if (typeof week !== "undefined") wrap.appendChild(bodyCueCard(day, week));
 
     // "What has this got to do with my body?" — the answer, in place.
     const why = el("details", { class: "body-why" });
@@ -1297,18 +1265,12 @@ const UI = (function () {
   }
 
   // Plain-text version of the report for "Copy summary" — structural facts
-  // only (both charts, the choice tally, the growth direction). Deliberately
+  // only (both charts, days complete, the growth direction). Deliberately
   // excludes every free-text note and journal entry: those never leave the
   // device (product description §8–9).
   function reportSummaryText(s, hs) {
     const natal = computeChart(s.me, hs);
     const inc = computeInceptionChart(s.me, s.cycle.startedAtISO, hs);
-    const choices = s.cycle.choices || {};
-    let lean = 0, counter = 0;
-    for (let d = 1; d <= 21; d++) {
-      if (choices[d] === "lean") lean++;
-      else if (choices[d] === "counter") counter++;
-    }
     const done = s.cycle.completedDays.length;
     const nn = natal.positions.NorthNode;
     const lines = [
@@ -1320,10 +1282,7 @@ const UI = (function () {
         (natal.asc != null ? ", rising " + ASTRO.signOf(natal.asc) : ""),
       "The chart you made (pressed Start " +
         (s.cycle.startedAtISO ? new Date(s.cycle.startedAtISO).toLocaleDateString() : "—") +
-        "): Sun in " + ASTRO.signOf(inc.positions.Sun.lon) + ", Moon in " + ASTRO.signOf(inc.positions.Moon.lon),
-      "",
-      "Your 21 choices: with the grain " + lean + " · against the grain " + counter +
-        " · not logged " + (21 - lean - counter)
+        "): Sun in " + ASTRO.signOf(inc.positions.Sun.lon) + ", Moon in " + ASTRO.signOf(inc.positions.Moon.lon)
     ];
     if (nn) lines.push("", "Growing toward: North Node in " + ASTRO.signOf(nn.lon));
     lines.push("", "Your day-by-day notes stay private on your device and are not included here.");
@@ -1364,37 +1323,13 @@ const UI = (function () {
       ])
     );
 
-    const choices = s.cycle.choices || {};
-    let lean = 0, counter = 0;
-    for (let d = 1; d <= 21; d++) {
-      if (choices[d] === "lean") lean++;
-      else if (choices[d] === "counter") counter++;
-    }
-    const skipped = 21 - lean - counter;
-    const dots = el("div", { class: "choice-dots" });
-    for (let d = 1; d <= 21; d++) {
-      const k = choices[d];
-      dots.appendChild(el("span", {
-        class: "choice-dot " + (k === "lean" ? "is-lean" : k === "counter" ? "is-counter" : "is-skip"),
-        title: "Day " + d + ": " + (k === "lean" ? "with the grain" : k === "counter" ? "against the grain" : "no choice logged")
-      }));
-    }
-    report.appendChild(
-      el("div", { class: "card" }, [
-        el("h4", { text: "The 21 choices you logged" }),
-        dots,
-        el("p", { class: "day-text", text:
-          "With the grain " + lean + " · against the grain " + counter + " · " +
-          skipped + " not logged. That string of choices is yours alone — no chart produced it." })
-      ])
-    );
-
     report.appendChild(bodyPatternCard());
 
     const twins = el("div", { class: "notice" });
     twins.textContent =
-      "Identical twins share a birth chart to the minute. Their lives aren't identical. " +
-      "The difference is 21 days like these, repeated for years.";
+      "Identical twins share a birth chart to the minute — and still live different lives. " +
+      "What separates them is 21 days like these: the showing up, the attention, the small turns " +
+      "taken in real moments. The chart was the map. This part was yours.";
     report.appendChild(twins);
 
     const nn = natal.positions.NorthNode;
@@ -1683,9 +1618,12 @@ const UI = (function () {
   function dayQuoteCard(day, week) {
     const q = CONTENT.quoteForDay(day, week);
     if (!q) return document.createComment("no quote");
-    return el("blockquote", { class: "day-quote" }, [
-      el("p", { class: "day-quote-text", text: "“" + q.text + "”" }),
-      el("cite", { class: "day-quote-who", text: "— " + q.who })
+    return el("div", { class: "card quote-card" }, [
+      el("h4", { text: "A line to sit with" }),
+      el("blockquote", { class: "day-quote" }, [
+        el("p", { class: "day-quote-text", text: "“" + q.text + "”" }),
+        el("cite", { class: "day-quote-who", text: "— " + q.who })
+      ])
     ]);
   }
 
@@ -1745,20 +1683,11 @@ const UI = (function () {
       frag.appendChild(week3Content(day, s, hs));
     }
 
+    // Three consistent sections in a fixed order: a line to sit with, the
+    // practice you'll do, and what the body noticed afterward.
+    frag.appendChild(dayQuoteCard(day, week));
     frag.appendChild(practicePicker(day, week));
-    frag.appendChild(choiceFork(day, week));
-
-    // Reflection quote, body cue and body log are the deeper, optional part
-    // of the daily ritual — kept open for the first couple of days, then
-    // folded away by default so a returning day feels lighter (all still
-    // one tap away).
-    const extras = el("details", { class: "day-extras" });
-    if (day <= 2) extras.open = true;
-    extras.appendChild(el("summary", { text: "Quote, body cue & body log" }));
-    extras.appendChild(dayQuoteCard(day, week));
-    extras.appendChild(bodyCueCard(day, week));
-    extras.appendChild(bodyLog(day));
-    frag.appendChild(extras);
+    frag.appendChild(bodyLog(day, week));
 
     if (mode === "active") {
       const done = s.cycle.completedDays.indexOf(day) !== -1;
@@ -1769,7 +1698,7 @@ const UI = (function () {
       frag.appendChild(doneBtn);
     } else {
       frag.appendChild(el("p", { class: "day-done-note", text:
-        "Completed. You can still revise the practice or choice above — nothing here is locked." }));
+        "Completed. You can still revise the practice or the body note above — nothing here is locked." }));
     }
     return frag;
   }

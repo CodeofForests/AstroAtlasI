@@ -11,6 +11,22 @@
 
 const PLANNED = [
   {
+    title: "\"Today's choice\" (daily fork) — removed for now, decide if it comes back",
+    status: "open",
+    effort: "small",
+    inProgress: false,
+    statusLabel: "Parked at Lindsey's request",
+    desc:
+      "The per-day 'Today's choice' fork (lean with / against the grain of your chart) was " +
+      "removed from the day view (see COMPLETED). Its data path still exists: STORE.recordChoice " +
+      "and s.cycle.choices are untouched, and CONTENT.experimentFor / week3Fork / BODY_EXPERIMENT " +
+      "/ WEEK3_FORKS are still there — re-adding is roughly: restore choiceFork() in js/ui.js and " +
+      "one line in dayView, plus the 'choices you logged' card + choice-strip in divergenceView " +
+      "and the reportSummaryText line. Decide whether it returns (maybe sparser — a few times a " +
+      "week rather than daily) once there's feedback on the lighter day.",
+    dest: { tab: "cycle", subtab: null, scrollTo: null }
+  },
+  {
     title: "Horary reveal — depth pass on the Goldstein-Jacobson judgement",
     status: "open",
     effort: "medium",
@@ -449,6 +465,28 @@ const PLANNED = [
 ];
 
 const COMPLETED = [
+  {
+    date: "2026-09-07",
+    title: "Consistent daily sequence (Quote / Practice / Body); dropped \"Today's choice\"",
+    desc:
+      "Lindsey: the three things a day asks (practice, choice, body) weren't treated as peers " +
+      "— practice and choice were prominent cards, the body log was buried in a collapsible — " +
+      "and 'Today's choice' felt like a daily chore. Decision: remove the daily fork for now, " +
+      "and give the day one consistent sequence: (1) 'A line to sit with' (the quote, promoted " +
+      "into its own card), (2) 'Today's practice' (Mind/Speech/Body), (3) 'How the body feels' " +
+      "(the 'In the body' cue now nested inside the body-log card as context). The old " +
+      "collapsible 'Quote, body cue & body log' fold is gone — all three are visible peers. " +
+      "js/ui.js: choiceFork() deleted, its call removed from dayView, the day-extras <details> " +
+      "removed, bodyLog(day) -> bodyLog(day, week). divergenceView: the 'The 21 choices you " +
+      "logged' card + choice-strip removed; the twins statement reworked to stand alone as a " +
+      "one-time capstone (no longer leaning on a choices tally), and the matching journeyIntro " +
+      "twins line + 'what a day asks of you' copy updated to the new shape. reportSummaryText " +
+      "and journeyReviewAll no longer reference choices (review rows now show done/not done). " +
+      "s.cycle.choices and STORE.recordChoice are left in place; re-adding the fork is a small " +
+      "job, logged as PLANNED. Verified in the app — new sequence, Day-21 report, review list " +
+      "— no console errors.",
+    dest: { tab: "cycle", subtab: null, scrollTo: null }
+  },
   {
     date: "2026-09-07",
     title: "Practices as Mind / Speech / Body; weekly horary bonus with a thought log",
