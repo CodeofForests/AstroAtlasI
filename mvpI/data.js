@@ -415,6 +415,27 @@ const PLANNED = [
 const COMPLETED = [
   {
     date: "2026-09-07",
+    title: "People tab: make the invite an honest simulation + email field; My Journey in the drawer",
+    desc:
+      "Tester confusion on the People tab: no email field, and unclear whether an invite is " +
+      "actually sent or the recipient must install the app first. Reality: it's a local, " +
+      "no-server simulation. Changes (js/ui.js, index.html): (1) the intro is now an explicit " +
+      "notice — nothing is emailed; in the finished app you'd enter their email, they'd get " +
+      "an invitation, open their own account and accept there; here one browser plays both " +
+      "sides via 'Accept (as them)' / 'Decline (as them)'. (2) The invite form now has an " +
+      "'Their email' field (birthForm gained an opts.email flag; stored on the person record " +
+      "as `email`), labelled 'Where the real invitation would go. Optional here — not sent.' " +
+      "(3) Submit button relabelled 'Send invitation' -> 'Add & preview the invite'. (4) An " +
+      "invited person's card now says 'invited — nothing emailed, this is a local simulation' " +
+      "and shows the invite address; the preview text is reframed as 'the invitation they'd " +
+      "receive would say…'. (5) Guard: adding a person whose name matches the account owner's " +
+      "is rejected with a toast. (6) 'My Journey' (-> #cycle) added to the My account drawer " +
+      "above People/Galaxy/Privacy. The real email-invite / two-account exchange stays " +
+      "tracked under the backend PLANNED item.",
+    dest: { tab: "people", subtab: null, scrollTo: null }
+  },
+  {
+    date: "2026-09-07",
     title: "Journey overview map, one-page review, report export, and a lighter daily loop",
     desc:
       "Tester feedback after doing the 21-day journey: felt repetitive; sometimes just " +

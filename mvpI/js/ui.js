@@ -304,14 +304,21 @@ const UI = (function () {
     return String(n).padStart(2, "0");
   }
 
-  function birthForm(onSubmit, title, submitLabel, existing, prefillDate) {
+  function birthForm(onSubmit, title, submitLabel, existing, prefillDate, opts) {
+    opts = opts || {};
     const wrap = el("div", { class: "card form-card" });
     wrap.appendChild(el("h3", { text: title }));
     wrap.appendChild(
-      el("p", { class: "small-note", text: "Fill in each field below — your own birth details, exactly as you'd enter them for any birth chart calculator." })
+      el("p", { class: "small-note", text: opts.email
+        ? "Their birth details are what the chart needs. The email is only here to show the real invite flow — nothing is sent from this prototype."
+        : "Fill in each field below — your own birth details, exactly as you'd enter them for any birth chart calculator." })
     );
 
     const nameInput = el("input", { type: "text", placeholder: "e.g. Lindsey" });
+    const emailInput = opts.email
+      ? el("input", { type: "email", placeholder: "e.g. andreas@example.com" })
+      : null;
+    if (emailInput && existing && existing.email) emailInput.value = existing.email;
     const dateInput = el("input", { type: "date" });
     const timeInput = el("input", { type: "time" });
     const unknownCheck = el("input", { type: "checkbox", id: "unknown-time-" + Math.random().toString(36).slice(2) });
@@ -382,15 +389,18 @@ const UI = (function () {
         const [h2, m2] = timeInput.value.split(":").map(Number);
         hh = h2; mm = m2;
       }
-      onSubmit({
+      const profile = {
         name: nameInput.value.trim(),
         wall: { year: y, month: m, day: d, hour: hh, minute: mm },
         place: { lat: lat, lon: lon, zone: zoneInput.value.trim() },
         unknownTime: unknownCheck.checked
-      });
+      };
+      if (emailInput) profile.email = emailInput.value.trim();
+      onSubmit(profile);
     });
 
     wrap.appendChild(labeledField("Name", null, [nameInput]));
+    if (emailInput) wrap.appendChild(labeledField("Their email", "Where the real invitation would go. Optional here — not sent.", [emailInput]));
     wrap.appendChild(labeledField("Date of birth", null, [dateInput]));
     const timeGroup = labeledField("Time of birth", "As exact as you have it — even a rough guess is better than nothing, or check the box if it's genuinely unknown.", [timeInput]);
     timeGroup.appendChild(el("div", { class: "field-row" }, [unknownLabel]));
@@ -1468,11 +1478,14 @@ const UI = (function () {
     root.appendChild(backButton());
     root.appendChild(el("h2", { text: "People" }));
     root.appendChild(
-      el("p", { class: "small-note", text:
-        "This prototype simulates both sides of consent in one browser: adding someone shows what they'd see " +
-        "before accepting, and accepting is a separate explicit step — the same shape a real two-account invite " +
-        "would take."
-      })
+      el("div", { class: "notice" }, [
+        document.createTextNode(
+          "There's no server yet, so nothing is actually emailed. In the finished app you'd enter the other " +
+          "person's email; they'd get an invitation, open their own account, and accept it there — their chart " +
+          "never becomes part of your Galaxy without that yes. Here, one browser stands in for both people: " +
+          "enter their birth details below, then use “Accept (as them)” / “Decline (as them)” to play their side."
+        )
+      ])
     );
 
     if (s.others.length === 0) {
@@ -1482,14 +1495,19 @@ const UI = (function () {
     s.others.forEach((p) => {
       const card = el("div", { class: "card" });
       card.appendChild(el("h4", { text: p.name || "(unnamed)" }));
-      card.appendChild(el("div", { class: "small-note", text: "Consent status: " + p.consent }));
+      const statusLine = p.consent === "invited"
+        ? "Consent status: invited — nothing emailed, this is a local simulation"
+        : "Consent status: " + p.consent;
+      card.appendChild(el("div", { class: "small-note", text: statusLine }));
+      if (p.email) card.appendChild(el("div", { class: "small-note", text: "Invite address: " + p.email }));
       if (p.consent === "invited") {
         card.appendChild(
           el("div", { class: "notice" }, [
             document.createTextNode(
-              "Invitation preview — what " + (p.name || "this person") + " would see: “" +
+              "The invitation they'd receive would say: “" +
               (s.me && s.me.name ? s.me.name : "Someone") + " wants to add your chart to their Week 3 and Galaxy. " +
-              "Your Weeks 1–2 stay private to you always; only your chart placements are shared, and you can withdraw at any time.”"
+              "Your Weeks 1–2 stay private to you always; only your chart placements are shared, and you can withdraw at any time.” " +
+              "In this prototype, click below to stand in for their reply."
             )
           ])
         );
@@ -1512,9 +1530,15 @@ const UI = (function () {
     root.appendChild(el("h3", { text: "Invite someone" }));
     root.appendChild(
       birthForm((profile) => {
+        if (s.me && s.me.name && profile.name &&
+            profile.name.trim().toLowerCase() === s.me.name.trim().toLowerCase()) {
+          window.APP_TOAST && window.APP_TOAST("That's your own name — add the other person");
+          return;
+        }
         STORE.addOther(profile);
         renderPeopleTab();
-      }, "Their birth details", "Send invitation")
+        document.getElementById("panel-people").scrollIntoView({ block: "start" });
+      }, "Their birth details", "Add & preview the invite", null, null, { email: true })
     );
   }
 
