@@ -11,6 +11,41 @@
 
 const PLANNED = [
   {
+    title: "Reduce felt repetition in the 21-day loop (deeper restructure)",
+    status: "open",
+    effort: "medium",
+    inProgress: false,
+    statusLabel: "Partly done - light pass shipped, structural options open",
+    desc:
+      "Tester feedback: the day-to-day loop feels repetitive - same five layers every day, " +
+      "some days just clicked through. A light pass shipped (see COMPLETED: per-day arc line, " +
+      "quote/body-cue/body-log folded into a collapsible after day 2, journey map for " +
+      "orientation). Deeper options still open for a decision: (a) a weekly rhythm where days " +
+      "7/14/21 are shorter 'week close' reflections that feel different from the other days; " +
+      "(b) letting the user set a lighter or fuller daily mode; (c) varying the reading " +
+      "structure between Week 1 and Week 2 rather than the same gift/cost paragraph shape. " +
+      "Needs a call on how far to go before more content work.",
+    dest: { tab: "cycle", subtab: null, scrollTo: null }
+  },
+  {
+    title: "Confirm what the exported / printed report may include",
+    status: "open",
+    effort: "small",
+    inProgress: false,
+    statusLabel: "Decision for Lindsey",
+    desc:
+      "The Day-21 report can now be printed (print stylesheet) and copied as a plain-text " +
+      "summary (see COMPLETED). The boundary currently applied, to stay inside product " +
+      "description sec 8-9: the export holds only STRUCTURAL facts - the chart you were given, " +
+      "the chart you made, the with-grain/against-grain choice tally, the body-pattern " +
+      "summary, and the North Node direction. It deliberately excludes every free-text note, " +
+      "practice note and body-log entry - those never leave the device. Confirm this is the " +
+      "right line, or say if the exported report should include more (e.g. the per-day theme " +
+      "list) or less. Also open: whether to offer a real PDF/image file rather than relying " +
+      "on the browser's print-to-PDF.",
+    dest: { tab: "cycle", subtab: null, scrollTo: null }
+  },
+  {
     title: "Further motion polish (aspect lines drawing in, scroll parallax, headline reveal)",
     status: "open",
     effort: "small",
@@ -378,6 +413,34 @@ const PLANNED = [
 ];
 
 const COMPLETED = [
+  {
+    date: "2026-09-07",
+    title: "Journey overview map, one-page review, report export, and a lighter daily loop",
+    desc:
+      "Tester feedback after doing the 21-day journey: felt repetitive; sometimes just " +
+      "clicked through to reach the end; couldn't export or review the final report; and a " +
+      "'lost feeling' clicking day 1 -> day 2 -> ... with no sense of the whole shape or " +
+      "where it was heading. Four changes in js/ui.js + styles.css: (1) JOURNEY MAP - a " +
+      "'The whole journey' card now sits at the top of the Journey tab: three labelled weeks " +
+      "(Your Gift / The Cost of the Gift / The Others) x seven day cells, showing done / " +
+      "today / upcoming, each reachable cell tappable, plus a line spelling out what Day 21 " +
+      "gives you. (2) PREVIEW THE DESTINATION - 'Preview where this lands' opens the shape of " +
+      "the Day-21 report before finishing, with a banner noting it fills in as you go. (3) " +
+      "REVIEW - 'Review all 21 days on one page' lists every day's theme + your logged choice " +
+      "+ your practice on one scroll, tap any row to open it; reachable from the map and the " +
+      "finished report (the old day-by-day 'Look back' stays too). (4) EXPORT - the finished " +
+      "report has 'Save / print report' (print stylesheet, .report-print only) and 'Copy " +
+      "summary' (plain text). Structural facts only - both charts, choice tally, body " +
+      "pattern, North Node - never the free-text notes, which stay on the device (product " +
+      "description sec 8-9); an on-screen note says so. (5) LIGHTER DAY - each day now opens " +
+      "with a one-line arc marker ('Naming the strengths you were born with - one planet a " +
+      "day. Today: Mercury.'), and the quote / body cue / body log fold into a collapsible " +
+      "that is open only for days 1-2. Verified in the running app: map states, preview, " +
+      "review list + row open, export buttons + privacy note, collapsed extras - no console " +
+      "errors. Deeper repetition restructure and the export-boundary confirmation are logged " +
+      "as PLANNED.",
+    dest: { tab: "cycle", subtab: null, scrollTo: null }
+  },
   {
     date: "2026-09-07",
     title: "Make it feel alive: interactive chart wheel, journey sky, step transitions, tactile press",

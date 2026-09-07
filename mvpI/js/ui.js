@@ -548,6 +548,8 @@ const UI = (function () {
   // day from the Day-21 summary. Both are transient UI state, not persisted.
   let viewDay = null;
   let reviewMode = false;
+  let previewReport = false; // browsing the shape of the Day-21 report before finishing
+  let reviewAll = false;     // the one-page "all 21 days" review
   function clampViewDay(maxDay) {
     if (viewDay == null || viewDay > maxDay) viewDay = maxDay;
     if (viewDay < 1) viewDay = 1;
@@ -557,6 +559,120 @@ const UI = (function () {
     if (day <= 7) return 1;
     if (day <= 14) return 2;
     return 3;
+  }
+  const WEEK_TITLE = { 1: "Your Gift", 2: "The Cost of the Gift", 3: "The Others" };
+  const WEEK_BLURB = {
+    1: "Naming the strengths you were born with — one planet a day.",
+    2: "The same seven planets, seen from the price each strength carries.",
+    3: "Turning the same seeing onto the people around you."
+  };
+
+  // The whole 21-day shape on one screen: three weeks, seven days each, with
+  // what's done, where today is, and what Day 21 gives you. This is the
+  // answer to "where am I / what is this heading toward" — shown above the
+  // day itself so the journey never feels like an undifferentiated march.
+  function journeyMap(s, hs, today) {
+    const complete = s.cycle.completedDays.length >= 21;
+    const wrap = el("div", { class: "card journey-map" });
+    wrap.appendChild(el("h3", { text: "The whole journey" }));
+
+    for (let w = 1; w <= 3; w++) {
+      const row = el("div", { class: "jm-week" });
+      row.appendChild(el("div", { class: "jm-week-head" }, [
+        el("span", { class: "jm-week-name", text: "Week " + w + " · " + WEEK_TITLE[w] }),
+        el("span", { class: "jm-week-blurb", text: WEEK_BLURB[w] })
+      ]));
+      const cells = el("div", { class: "jm-cells" });
+      for (let i = 0; i < 7; i++) {
+        const d = (w - 1) * 7 + i + 1;
+        const done = s.cycle.completedDays.indexOf(d) !== -1;
+        const isToday = d === today && !complete;
+        const reached = d <= today;
+        const label = (w === 3) ? "the people in your life"
+          : CONTENT.WEEK_BODIES[i] + (w === 1 ? " — the gift" : " — the cost");
+        const cell = el("button", {
+          type: "button",
+          class: "jm-cell" + (done ? " is-done" : "") + (isToday ? " is-today" : "") + (!reached ? " is-future" : ""),
+          title: "Day " + d + " · " + label
+        }, [
+          el("span", { class: "jm-cell-day", text: done ? "✓" : String(d) })
+        ]);
+        if (reached) {
+          cell.addEventListener("click", () => {
+            previewReport = false; reviewAll = false; reviewMode = complete;
+            viewDay = d; renderCycleTab();
+            document.getElementById("panel-cycle").scrollIntoView({ block: "start" });
+          });
+        } else {
+          cell.disabled = true;
+        }
+        cells.appendChild(cell);
+      }
+      row.appendChild(cells);
+      wrap.appendChild(row);
+    }
+
+    wrap.appendChild(el("p", { class: "jm-destination", text:
+      "Day 21 gives you your report: the chart you were given vs. the one you made by turning up, " +
+      "your 21 daily choices as one picture, and the direction you're growing toward." }));
+
+    const links = el("div", { class: "jm-links" });
+    if (complete) {
+      const rep = el("button", { type: "button", class: "offer-btn", text: "See the report →" });
+      rep.addEventListener("click", () => { previewReport = false; reviewAll = false; reviewMode = false; viewDay = null; renderCycleTab(); });
+      links.appendChild(rep);
+      const all = el("button", { type: "button", class: "offer-btn", text: "Review all 21 days on one page" });
+      all.addEventListener("click", () => { reviewAll = true; reviewMode = false; previewReport = false; renderCycleTab(); document.getElementById("panel-cycle").scrollIntoView({ block: "start" }); });
+      links.appendChild(all);
+    } else {
+      const prev = el("button", { type: "button", class: "offer-btn", text: "Preview where this lands →" });
+      prev.addEventListener("click", () => { previewReport = true; reviewAll = false; renderCycleTab(); document.getElementById("panel-cycle").scrollIntoView({ block: "start" }); });
+      links.appendChild(prev);
+    }
+    wrap.appendChild(links);
+    return wrap;
+  }
+
+  // Every day on one scrollable page: the theme, your logged choice, your
+  // practice pick — so the journey can be taken in as a whole, not only
+  // clicked through one day at a time.
+  function journeyReviewAll(s, hs) {
+    const frag = document.createDocumentFragment();
+    const chart = computeChart(s.me, hs);
+    frag.appendChild(el("h3", { text: "All 21 days" }));
+    frag.appendChild(el("p", { class: "small-note", text:
+      "The shape of the whole journey. Tap any day to open it in full." }));
+
+    for (let w = 1; w <= 3; w++) {
+      frag.appendChild(el("h4", { class: "review-week-head", text: "Week " + w + " · " + WEEK_TITLE[w] }));
+      for (let i = 0; i < 7; i++) {
+        const d = (w - 1) * 7 + i + 1;
+        const choices = s.cycle.choices || {};
+        const k = choices[d];
+        const choiceTxt = k === "lean" ? "with the grain" : k === "counter" ? "against the grain" : "no choice logged";
+        let theme;
+        if (w === 3) {
+          theme = "the people in your life";
+        } else {
+          const body = CONTENT.WEEK_BODIES[i];
+          const p = chart.positions[body];
+          theme = body + (p ? " in " + ASTRO.signOf(p.lon) : "") + (w === 1 ? " — the gift" : " — the cost");
+        }
+        let practice = null;
+        try { practice = localStorage.getItem("aa_practice_day_" + d); } catch (e) {}
+        const row = el("button", { type: "button", class: "review-row" }, [
+          el("span", { class: "review-row-day", text: "Day " + d }),
+          el("span", { class: "review-row-theme", text: theme }),
+          el("span", { class: "review-row-meta", text: choiceTxt + (practice ? " · " + practice : "") })
+        ]);
+        row.addEventListener("click", () => {
+          reviewAll = false; reviewMode = true; viewDay = d; renderCycleTab();
+          document.getElementById("panel-cycle").scrollIntoView({ block: "start" });
+        });
+        frag.appendChild(row);
+      }
+    }
+    return frag;
   }
 
   // Shared with the Galaxy tab so "how bright is my sky" means the same
@@ -881,15 +997,51 @@ const UI = (function () {
     return card;
   }
 
-  function divergenceView(s, hs) {
+  // Plain-text version of the report for "Copy summary" — structural facts
+  // only (both charts, the choice tally, the growth direction). Deliberately
+  // excludes every free-text note and journal entry: those never leave the
+  // device (product description §8–9).
+  function reportSummaryText(s, hs) {
+    const natal = computeChart(s.me, hs);
+    const inc = computeInceptionChart(s.me, s.cycle.startedAtISO, hs);
+    const choices = s.cycle.choices || {};
+    let lean = 0, counter = 0;
+    for (let d = 1; d <= 21; d++) {
+      if (choices[d] === "lean") lean++;
+      else if (choices[d] === "counter") counter++;
+    }
+    const done = s.cycle.completedDays.length;
+    const nn = natal.positions.NorthNode;
+    const lines = [
+      "AstroAtlasI — Journey " + s.cycle.number + " report",
+      done + " of 21 days complete",
+      "",
+      "The chart you were given: Sun in " + ASTRO.signOf(natal.positions.Sun.lon) +
+        ", Moon in " + ASTRO.signOf(natal.positions.Moon.lon) +
+        (natal.asc != null ? ", rising " + ASTRO.signOf(natal.asc) : ""),
+      "The chart you made (pressed Start " +
+        (s.cycle.startedAtISO ? new Date(s.cycle.startedAtISO).toLocaleDateString() : "—") +
+        "): Sun in " + ASTRO.signOf(inc.positions.Sun.lon) + ", Moon in " + ASTRO.signOf(inc.positions.Moon.lon),
+      "",
+      "Your 21 choices: with the grain " + lean + " · against the grain " + counter +
+        " · not logged " + (21 - lean - counter)
+    ];
+    if (nn) lines.push("", "Growing toward: North Node in " + ASTRO.signOf(nn.lon));
+    lines.push("", "Your day-by-day notes stay private on your device and are not included here.");
+    return lines.join("\n");
+  }
+
+  function divergenceView(s, hs, opts) {
+    opts = opts || {};
     const wrap = document.createDocumentFragment();
     const natal = computeChart(s.me, hs);
 
-    wrap.appendChild(el("h3", { text: "Your 21 days" }));
+    const report = el("div", { class: "report-print" });
+    report.appendChild(el("h3", { text: "Your 21 days" }));
 
     const givenSun = ASTRO.signOf(natal.positions.Sun.lon);
     const givenMoon = ASTRO.signOf(natal.positions.Moon.lon);
-    wrap.appendChild(
+    report.appendChild(
       el("div", { class: "card" }, [
         el("h4", { text: "The chart you were given" }),
         el("p", { class: "day-text", text:
@@ -903,7 +1055,7 @@ const UI = (function () {
     const startedTxt = s.cycle.startedAtISO
       ? new Date(s.cycle.startedAtISO).toLocaleDateString()
       : "the day you began";
-    wrap.appendChild(
+    report.appendChild(
       el("div", { class: "card" }, [
         el("h4", { text: "The chart you made" }),
         el("p", { class: "day-text", text:
@@ -928,7 +1080,7 @@ const UI = (function () {
         title: "Day " + d + ": " + (k === "lean" ? "with the grain" : k === "counter" ? "against the grain" : "no choice logged")
       }));
     }
-    wrap.appendChild(
+    report.appendChild(
       el("div", { class: "card" }, [
         el("h4", { text: "The 21 choices you logged" }),
         dots,
@@ -938,18 +1090,18 @@ const UI = (function () {
       ])
     );
 
-    wrap.appendChild(bodyPatternCard());
+    report.appendChild(bodyPatternCard());
 
     const twins = el("div", { class: "notice" });
     twins.textContent =
       "Identical twins share a birth chart to the minute. Their lives aren't identical. " +
       "The difference is 21 days like these, repeated for years.";
-    wrap.appendChild(twins);
+    report.appendChild(twins);
 
     const nn = natal.positions.NorthNode;
     if (nn) {
       const nnSign = ASTRO.signOf(nn.lon);
-      wrap.appendChild(
+      report.appendChild(
         el("div", { class: "card" }, [
           el("h4", { text: "The direction you're growing toward" }),
           el("p", { class: "day-text", text:
@@ -959,11 +1111,46 @@ const UI = (function () {
       );
     }
 
+    wrap.appendChild(report);
+
+    if (opts.preview) return wrap;
+
+    // Take the report with you — structural summary only, never the notes.
+    const exportRow = el("div", { class: "report-export" });
+    const printBtn = el("button", { type: "button", class: "offer-btn", text: "Save / print report" });
+    printBtn.addEventListener("click", () => {
+      document.body.classList.add("printing-report");
+      window.print();
+      setTimeout(() => document.body.classList.remove("printing-report"), 500);
+    });
+    const copyBtn = el("button", { type: "button", class: "offer-btn", text: "Copy summary" });
+    copyBtn.addEventListener("click", () => {
+      const text = reportSummaryText(s, hs);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(
+          () => window.APP_TOAST && window.APP_TOAST("Summary copied"),
+          () => window.APP_TOAST && window.APP_TOAST("Copy failed")
+        );
+      } else if (window.APP_TOAST) {
+        window.APP_TOAST("Copy not available here");
+      }
+    });
+    exportRow.appendChild(printBtn);
+    exportRow.appendChild(copyBtn);
+    wrap.appendChild(exportRow);
+    wrap.appendChild(el("p", { class: "small-note", text:
+      "The saved report holds the chart comparison, your choice pattern and your growth direction. " +
+      "Your day-by-day notes stay private on this device and are never part of it." }));
+
     wrap.appendChild(glossaryCard());
 
     const look = el("button", { type: "button", class: "offer-btn", text: "Look back at any day" });
     look.addEventListener("click", () => { reviewMode = true; viewDay = 1; renderCycleTab(); });
     wrap.appendChild(look);
+    const allBtn = el("button", { type: "button", class: "offer-btn", text: "Review all 21 days on one page" });
+    allBtn.style.marginTop = "8px";
+    allBtn.addEventListener("click", () => { reviewAll = true; renderCycleTab(); });
+    wrap.appendChild(allBtn);
 
     const again = el("button", { class: "primary-btn", type: "button", text: "Start journey " + (s.cycle.number + 1) });
     again.style.marginTop = "8px";
@@ -1010,7 +1197,30 @@ const UI = (function () {
     const complete = s.cycle.completedDays.length >= 21;
     if (!complete) reviewMode = false;
 
+    // One-page review of every day (reachable from the map, and from the
+    // finished report).
+    if (reviewAll) {
+      const back = el("button", { type: "button", class: "back-link", text: complete ? "← Back to report" : "← Back to journey" });
+      back.addEventListener("click", () => { reviewAll = false; renderCycleTab(); });
+      root.appendChild(back);
+      root.appendChild(journeyReviewAll(s, hs));
+      return;
+    }
+
+    // Preview the shape of the Day-21 report before finishing it.
+    if (previewReport && !complete) {
+      const back = el("button", { type: "button", class: "back-link", text: "← Back to journey" });
+      back.addEventListener("click", () => { previewReport = false; renderCycleTab(); });
+      root.appendChild(back);
+      root.appendChild(el("div", { class: "notice", text:
+        "This is the shape of your Day 21 report — it fills in as you go. Right now it reflects " +
+        s.cycle.completedDays.length + " of 21 days." }));
+      root.appendChild(divergenceView(s, hs, { preview: true }));
+      return;
+    }
+
     if (complete && !reviewMode) {
+      root.appendChild(journeyMap(s, hs, today));
       root.appendChild(divergenceView(s, hs));
       return;
     }
@@ -1025,8 +1235,10 @@ const UI = (function () {
       return;
     }
 
-    // Journey in progress: browsable from Day 1 up to today.
+    // Journey in progress: the whole-journey map first (orientation), then
+    // the day itself, browsable from Day 1 up to today.
     clampViewDay(today);
+    root.appendChild(journeyMap(s, hs, today));
     root.appendChild(
       dayNav(viewDay, today, viewDay !== today ? function () { viewDay = null; renderCycleTab(); } : null)
     );
@@ -1195,6 +1407,17 @@ const UI = (function () {
     frag.appendChild(el("h3", { text: "Day " + day + " — Week " + week +
       (week === 1 ? " (Your Gift)" : week === 2 ? " (The Cost of the Gift)" : " (The Others)") }));
 
+    // One line naming where this day sits in the arc, so 21 days don't read
+    // as one undifferentiated stretch.
+    let progressionLine;
+    if (week === 1 || week === 2) {
+      const body = CONTENT.WEEK_BODIES[(day - 1) % 7];
+      progressionLine = WEEK_BLURB[week] + " Today: " + body + ".";
+    } else {
+      progressionLine = WEEK_BLURB[3] + " Day " + (day - 14) + " of 7.";
+    }
+    frag.appendChild(el("p", { class: "day-progression", text: progressionLine }));
+
     if (week === 1 || week === 2) {
       const body = CONTENT.WEEK_BODIES[(day - 1) % 7];
       const chart = computeChart(s.me, hs);
@@ -1206,11 +1429,20 @@ const UI = (function () {
       frag.appendChild(week3Content(day, s, hs));
     }
 
-    frag.appendChild(dayQuoteCard(day, week));
-    frag.appendChild(bodyCueCard(day, week));
     frag.appendChild(practicePicker(day, week));
-    frag.appendChild(bodyLog(day));
     frag.appendChild(choiceFork(day, week));
+
+    // Reflection quote, body cue and body log are the deeper, optional part
+    // of the daily ritual — kept open for the first couple of days, then
+    // folded away by default so a returning day feels lighter (all still
+    // one tap away).
+    const extras = el("details", { class: "day-extras" });
+    if (day <= 2) extras.open = true;
+    extras.appendChild(el("summary", { text: "Quote, body cue & body log" }));
+    extras.appendChild(dayQuoteCard(day, week));
+    extras.appendChild(bodyCueCard(day, week));
+    extras.appendChild(bodyLog(day));
+    frag.appendChild(extras);
 
     if (mode === "active") {
       const done = s.cycle.completedDays.indexOf(day) !== -1;
