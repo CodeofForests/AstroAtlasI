@@ -226,32 +226,47 @@ const CONTENT = (function () {
     return personalize(base, sign, house);
   }
 
+  // Practices are grouped into the three doors an action can come through:
+  // mind (thought), speech (word), body (deed / sensation). Each day suggests
+  // one, tied to the day's planet; the rest of that category — and the other
+  // two categories — stay available. `cat` drives the grouped picker in ui.js.
+  const PRACTICE_CATEGORIES = [
+    { key: "mind", label: "Mind", blurb: "Working with thought — catching it before it runs you." },
+    { key: "speech", label: "Speech", blurb: "Working with words — what you say, soften, or leave unsaid." },
+    { key: "body", label: "Body", blurb: "Working with sensation and deed — what the body knows first." }
+  ];
   const PRACTICES = [
-    { key: "breath", label: "Breath", desc: "Steadying yourself before looking at something uncomfortable. Gentle, slow breathing only — never breath-holding, never near water. Not medical guidance." },
-    { key: "meditation", label: "Meditation / sitting", desc: "Noticing a reaction without immediately obeying it." },
-    { key: "movement", label: "Movement / yoga", desc: "What the body is holding that the mind has explained away." },
-    { key: "journaling", label: "Journaling", desc: "Making a pattern visible; you can't examine what stays unwritten." },
-    { key: "cooking", label: "Cooking", desc: "Attention, sequence, and doing something concrete for someone." },
-    { key: "tidying", label: "Tidying your environment", desc: "What you've been avoiding is usually physical too." },
-    { key: "reading", label: "Reading", desc: "Sustained time inside another person's interior." },
-    { key: "music", label: "Music", desc: "Feeling something without needing words for it yet." },
-    { key: "novelty", label: "Changing your surroundings", desc: "Novelty interrupting autopilot — a different route home, an unfamiliar part of your own city, a café you'd normally walk past." }
+    // ---- Mind ----
+    { key: "meditation", cat: "mind", label: "Sit with a thought", desc: "Ten minutes. When a reaction rises, name it and don't obey it — just watch it pass." },
+    { key: "journaling", cat: "mind", label: "Journaling", desc: "Write the pattern down. You can't examine what stays unwritten." },
+    { key: "label_thoughts", cat: "mind", label: "Label three thoughts", desc: "Three times today, stop and name the thought you're having in one word — 'planning', 'blaming', 'wanting'. Then carry on." },
+    { key: "reading", cat: "mind", label: "Reading", desc: "An hour inside another person's interior — sustained attention on a mind that isn't yours." },
+    // ---- Speech ----
+    { key: "truth_sentence", cat: "speech", label: "One true sentence", desc: "Once today, say one true thing you'd normally soften or skip — plainly, kindly, without the cushion." },
+    { key: "no_complaint", cat: "speech", label: "A day without complaint", desc: "Notice every pull to complain out loud. Feel it, let it go unsaid. Count how many times." },
+    { key: "ask_not_tell", cat: "speech", label: "Ask instead of tell", desc: "Replace one statement you were about to make with a genuine question, and listen to the whole answer." },
+    { key: "chosen_silence", cat: "speech", label: "An hour of chosen silence", desc: "One deliberate hour of not speaking — chosen, not withdrawn. Notice what wanted to be said." },
+    // ---- Body ----
+    { key: "breath", cat: "body", label: "Gentle breath", desc: "Slow, easy breathing before you look at something hard. Never breath-holding, never near water. Not medical guidance." },
+    { key: "movement", cat: "body", label: "Movement / yoga", desc: "What the body is holding that the mind has explained away." },
+    { key: "cooking", cat: "body", label: "Cooking", desc: "Attention, sequence, and something concrete made for someone." },
+    { key: "tidying", cat: "body", label: "Tidying one corner", desc: "Set one small part of your space in order — what you've been avoiding is usually physical too." }
   ];
 
   // One practice per body is highlighted as "suggested for today", with a
-  // line saying why it fits — so the picker stops feeling like a random list.
-  // The other eight stay available; this is a nudge, not a lock. Week 1 and
-  // Week 2 share a body, so the suggestion carries across both.
+  // line saying why it fits. Week 1 and Week 2 share a body, so the
+  // suggestion carries across both. Each suggested key names a real PRACTICES
+  // entry; its category comes along for free.
   const PRACTICE_SUGGESTION = {
-    Sun:     { key: "journaling", why: "The Sun is who you are at the core — write yourself down when no one's watching." },
-    Moon:    { key: "breath",     why: "The Moon is what settles you — slow breathing is the quickest way back to it." },
-    Mercury: { key: "journaling", why: "Mercury is how you think — on paper you can see the shape of it." },
-    Venus:   { key: "cooking",    why: "Venus is what you find worth wanting — make something good with your hands, for someone." },
-    Mars:    { key: "movement",   why: "Mars is how you take action — move, and notice where the impulse actually lives." },
-    Jupiter: { key: "reading",    why: "Jupiter is where you reach — an hour inside someone else's thinking stretches it further." },
-    Saturn:  { key: "tidying",    why: "Saturn is the structural work — set one small part of your space in order." }
+    Sun:     { key: "journaling",    why: "The Sun is who you are at the core — write yourself down when no one's watching." },
+    Moon:    { key: "breath",        why: "The Moon is what settles you — slow breathing is the quickest way back to it." },
+    Mercury: { key: "truth_sentence", why: "Mercury is how you speak — say one true thing today without the cushion." },
+    Venus:   { key: "cooking",       why: "Venus is what you find worth wanting — make something good with your hands, for someone." },
+    Mars:    { key: "movement",      why: "Mars is how you take action — move, and notice where the impulse actually lives." },
+    Jupiter: { key: "reading",       why: "Jupiter is where you reach — an hour inside someone else's thinking stretches it further." },
+    Saturn:  { key: "tidying",       why: "Saturn is the structural work — set one small part of your space in order." }
   };
-  const WEEK3_SUGGESTION = { key: "reading", why: "Week 3 is about other people — reading is sustained time inside another person's interior." };
+  const WEEK3_SUGGESTION = { key: "ask_not_tell", why: "Week 3 is about other people — trade one statement for a real question and hear the whole answer." };
 
   function practiceSuggestion(day, week) {
     if (week === 3) return WEEK3_SUGGESTION;
@@ -439,6 +454,7 @@ const CONTENT = (function () {
     WEEK_BODIES: WEEK_BODIES,
     BODY_CORE: BODY_CORE,
     PRACTICES: PRACTICES,
+    PRACTICE_CATEGORIES: PRACTICE_CATEGORIES,
     GLOSSARY: GLOSSARY,
     dayContent: dayContent,
     experimentFor: experimentFor,

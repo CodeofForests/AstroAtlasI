@@ -685,6 +685,295 @@ const UI = (function () {
     return frag;
   }
 
+  // ============ HORARY THOUGHT LOG + WEEKLY REVEAL ============
+  // During each week the user logs the moment any strong thought strikes
+  // (date, time, place). Once that week's seven days are all complete, one
+  // of those moments can be put — as a question — to a horary chart cast
+  // for exactly that moment, read in the descriptive Goldstein-Jacobson
+  // style: significators, applying/separating, the Moon's next aspect,
+  // considerations before judgement. It never returns a yes/no.
+
+  let thoughtFormOpen = false;
+  let horaryDraft = { thoughtId: null, topicKey: null, question: "" };
+
+  function weekComplete(s, w) {
+    for (let d = (w - 1) * 7 + 1; d <= w * 7; d++) {
+      if (s.cycle.completedDays.indexOf(d) === -1) return false;
+    }
+    return true;
+  }
+  function thoughtsFor(s, w) {
+    return (s.thoughts || []).filter((t) => t.cycle === s.cycle.number && t.week === w);
+  }
+  function ordinalWord(n) {
+    return ["", "1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th", "10th", "11th", "12th"][n] || (n + "th");
+  }
+
+  function thoughtLogCard(s) {
+    const wrap = el("div", { class: "card thought-log" });
+    const curWeek = weekOf(Math.min(STORE.currentDay(), 21));
+    wrap.appendChild(el("h3", { text: "Strong thoughts — Week " + curWeek }));
+    wrap.appendChild(el("p", { class: "small-note", text:
+      "Whenever a strong thought comes up this week, log the moment it struck — date, time, place. " +
+      "Once the seven days are done, you can put one of them as a question to a horary chart cast for that exact moment." }));
+
+    const list = thoughtsFor(s, curWeek).slice().sort((a, b) => (a.atISO < b.atISO ? -1 : 1));
+    if (list.length === 0) {
+      wrap.appendChild(el("div", { class: "empty-hint", text: "Nothing logged yet this week." }));
+    } else {
+      list.forEach((t) => {
+        const when = new Date(t.atISO);
+        const row = el("div", { class: "thought-row" }, [
+          el("div", { class: "thought-body" }, [
+            el("div", { class: "thought-when", text:
+              when.toLocaleString([], { dateStyle: "medium", timeStyle: "short" }) +
+              (t.place && t.place.label ? " · " + t.place.label : "") }),
+            el("div", { class: "thought-note", text: t.note || "(no note)" })
+          ])
+        ]);
+        const del = el("button", { type: "button", class: "thought-del", title: "Remove", text: "✕" });
+        del.addEventListener("click", () => { STORE.deleteThought(t.id); renderCycleTab(); });
+        row.appendChild(del);
+        wrap.appendChild(row);
+      });
+    }
+
+    if (!thoughtFormOpen) {
+      const add = el("button", { type: "button", class: "offer-btn", text: "＋ Log a strong thought" });
+      add.addEventListener("click", () => { thoughtFormOpen = true; renderCycleTab(); });
+      wrap.appendChild(add);
+    } else {
+      wrap.appendChild(thoughtForm(s, curWeek));
+    }
+    return wrap;
+  }
+
+  function thoughtForm(s, week) {
+    const box = el("div", { class: "thought-form" });
+    const pad = (n) => String(n).padStart(2, "0");
+
+    const noteTa = el("textarea", { rows: "2", class: "practice-custom", placeholder: "The thought, in a few words." });
+    const dtInput = el("input", { type: "datetime-local" });
+    const now = new Date();
+    dtInput.value = now.getFullYear() + "-" + pad(now.getMonth() + 1) + "-" + pad(now.getDate()) +
+      "T" + pad(now.getHours()) + ":" + pad(now.getMinutes());
+
+    let place = s.me && s.me.place
+      ? { lat: s.me.place.lat, lon: s.me.place.lon, zone: s.me.place.zone, label: "where you were born" }
+      : null;
+    const placeSearch = el("input", { type: "text", placeholder: "A city — leave blank to use your birth place" });
+    const placeResults = el("div", { class: "place-results" });
+    const placeNote = el("div", { class: "small-note", text: place ? "Using: " + place.label : "Pick a place." });
+    placeSearch.addEventListener("input", () => {
+      placeResults.innerHTML = "";
+      findPlaces(placeSearch.value).forEach((p) => {
+        const b = el("button", { type: "button", class: "place-result", text: p.name });
+        b.addEventListener("click", () => {
+          place = { lat: p.lat, lon: p.lon, zone: p.zone, label: p.name };
+          placeSearch.value = p.name;
+          placeResults.innerHTML = "";
+          placeNote.textContent = "Using: " + p.name;
+        });
+        placeResults.appendChild(b);
+      });
+    });
+
+    const err = el("div", { class: "form-error" });
+    const save = el("button", { type: "button", class: "primary-btn", text: "Save this moment" });
+    save.addEventListener("click", () => {
+      err.textContent = "";
+      if (!noteTa.value.trim()) { err.textContent = "Write the thought in a few words."; return; }
+      if (!dtInput.value) { err.textContent = "Set the date and time it struck."; return; }
+      if (!place) { err.textContent = "Pick where you were."; return; }
+      STORE.addThought({
+        atISO: new Date(dtInput.value).toISOString(),
+        place: place,
+        note: noteTa.value.trim(),
+        cycle: s.cycle.number,
+        week: week
+      });
+      thoughtFormOpen = false;
+      renderCycleTab();
+    });
+    const cancel = el("button", { type: "button", class: "cancel-btn", text: "Cancel" });
+    cancel.addEventListener("click", () => { thoughtFormOpen = false; renderCycleTab(); });
+
+    box.appendChild(labeledField("The thought", null, [noteTa]));
+    box.appendChild(labeledField("When it struck", "As close as you can.", [dtInput]));
+    box.appendChild(labeledField("Where you were", "Defaults to your birth place — change it if you were somewhere else.", [placeSearch]));
+    box.appendChild(placeResults);
+    box.appendChild(placeNote);
+    box.appendChild(err);
+    box.appendChild(el("div", { class: "field-row" }, [save, cancel]));
+    return box;
+  }
+
+  // The weekly horary section: one card per completed week that has at least
+  // one logged thought and no question asked yet.
+  function horarySection(s) {
+    const frag = document.createDocumentFragment();
+    if (typeof HORARY === "undefined") return frag;
+    for (let w = 1; w <= 3; w++) {
+      if (!weekComplete(s, w)) continue;
+      if (thoughtsFor(s, w).length === 0) continue;
+      const key = s.cycle.number + "_" + w;
+      const asked = (s.horaryAsked || {})[key];
+      const card = el("div", { class: "card horary-card" });
+      card.appendChild(el("h3", { text: "Horary bonus — Week " + w }));
+      card.appendChild(asked ? horaryReveal(s, asked) : horaryAskForm(s, w, key));
+      frag.appendChild(card);
+    }
+    return frag;
+  }
+
+  function horaryAskForm(s, w, key) {
+    const box = el("div");
+    box.appendChild(el("p", { class: "small-note", text:
+      "Week " + w + " is complete. Pick one moment you logged and the matter it concerns — the chart is cast for that exact moment and place, and read descriptively (Goldstein-Jacobson): what the chart holds, never a yes or no." }));
+
+    box.appendChild(el("div", { class: "horary-label", text: "Which moment" }));
+    const tGrid = el("div", { class: "horary-picks" });
+    thoughtsFor(s, w).forEach((t) => {
+      const when = new Date(t.atISO);
+      const b = el("button", { type: "button",
+        class: "horary-pick" + (horaryDraft.thoughtId === t.id ? " active" : ""),
+        text: when.toLocaleString([], { dateStyle: "short", timeStyle: "short" }) + " — " + (t.note || "(no note)") });
+      b.addEventListener("click", () => { horaryDraft.thoughtId = t.id; renderCycleTab(); });
+      tGrid.appendChild(b);
+    });
+    box.appendChild(tGrid);
+
+    box.appendChild(el("div", { class: "horary-label", text: "What it concerns" }));
+    const topicGrid = el("div", { class: "horary-picks" });
+    HORARY.TOPICS.forEach((tp) => {
+      const b = el("button", { type: "button",
+        class: "horary-pick" + (horaryDraft.topicKey === tp.key ? " active" : ""),
+        title: tp.hint, text: tp.label });
+      b.addEventListener("click", () => { horaryDraft.topicKey = tp.key; renderCycleTab(); });
+      topicGrid.appendChild(b);
+    });
+    box.appendChild(topicGrid);
+
+    box.appendChild(el("div", { class: "horary-label", text: "Your question (optional, for your own record)" }));
+    const q = el("textarea", { rows: "2", class: "practice-custom", placeholder: "e.g. Should I take the offer in Berlin?" });
+    q.value = horaryDraft.question || "";
+    q.addEventListener("input", () => { horaryDraft.question = q.value; });
+    box.appendChild(q);
+
+    const err = el("div", { class: "form-error" });
+    box.appendChild(err);
+    const cast = el("button", { type: "button", class: "primary-btn", text: "Cast the chart" });
+    cast.addEventListener("click", () => {
+      err.textContent = "";
+      if (!horaryDraft.thoughtId) { err.textContent = "Pick one of your logged moments."; return; }
+      if (!horaryDraft.topicKey) { err.textContent = "Pick what the question concerns."; return; }
+      STORE.recordHorary(key, {
+        thoughtId: horaryDraft.thoughtId,
+        topicKey: horaryDraft.topicKey,
+        question: (horaryDraft.question || "").trim(),
+        askedISO: new Date().toISOString()
+      });
+      horaryDraft = { thoughtId: null, topicKey: null, question: "" };
+      renderCycleTab();
+    });
+    box.appendChild(cast);
+    box.appendChild(el("p", { class: "small-note", text: "One question per week — it can't be re-cast once done." }));
+    return box;
+  }
+
+  function factorBlock(title, lines) {
+    const b = el("div", { class: "horary-factor" });
+    b.appendChild(el("div", { class: "horary-label", text: title }));
+    lines.filter(Boolean).forEach((l) => b.appendChild(el("p", { class: "day-text", text: l })));
+    return b;
+  }
+
+  function horaryReveal(s, asked) {
+    const box = el("div");
+    const thought = (s.thoughts || []).find((t) => t.id === asked.thoughtId);
+    if (!thought) {
+      box.appendChild(el("p", { class: "small-note", text: "The logged moment for this question is no longer available." }));
+      return box;
+    }
+    const topic = HORARY.TOPICS.find((t) => t.key === asked.topicKey) || HORARY.TOPICS[0];
+    const when = new Date(thought.atISO);
+
+    if (asked.question) box.appendChild(el("p", { class: "horary-question", text: "“" + asked.question + "”" }));
+    box.appendChild(el("p", { class: "small-note", text:
+      "Cast for " + when.toLocaleString([], { dateStyle: "medium", timeStyle: "short" }) +
+      (thought.place && thought.place.label ? " · " + thought.place.label : "") +
+      " — the moment the thought struck. Matter: " + topic.label + " (" + ordinalWord(topic.house) + " house)." }));
+
+    let j;
+    try { j = HORARY.judge(thought, topic.house); }
+    catch (e) {
+      box.appendChild(el("p", { class: "form-error", text: "Could not cast this chart from the logged moment." }));
+      return box;
+    }
+
+    const wheelWrap = el("div", { class: "chart-wheel-wrap" });
+    wheelWrap.appendChild(CHART_WHEEL.build(j.chart));
+    box.appendChild(wheelWrap);
+
+    if (!j.radical.ok) {
+      const r = el("div", { class: "notice" });
+      r.appendChild(el("div", { class: "horary-label", text: "Before reading — considerations" }));
+      j.radical.notes.forEach((n) => r.appendChild(el("p", { class: "small-note", text: "• " + n })));
+      box.appendChild(r);
+    }
+
+    const f = el("div", { class: "horary-factors" });
+
+    f.appendChild(factorBlock("You (the querent)", [
+      "Ascendant in " + j.querent.ascSign + " — you are shown by " +
+        (j.querent.ruler ? j.querent.ruler.body : "its ruler") + ".",
+      j.querent.ruler ? (j.querent.ruler.body + " is at " + j.querent.ruler.at + ", in the " +
+        ordinalWord(j.querent.ruler.house) + " house" +
+        (j.querent.ruler.flags.length ? " — " + j.querent.ruler.flags.join("; ") : "") + ".") : null,
+      "The Moon (also you, and the flow of the matter) is at " + j.querent.moon.at +
+        ", in the " + ordinalWord(j.querent.moon.house) + " house."
+    ]));
+
+    let moonLine;
+    if (j.querent.moon.next.voidOfCourse) {
+      moonLine = "The Moon makes no more aspects before it leaves its sign — 'void of course', traditionally 'the matter drifts; little may come of it either way'.";
+    } else {
+      const nd = j.querent.moon.next.inDays;
+      moonLine = "The Moon's next contact is a " + j.querent.moon.next.aspect + " to " + j.querent.moon.next.to +
+        " (about " + nd.toFixed(1) + " day" + (nd < 1.5 ? "" : "s") + " on) — this is what develops next.";
+    }
+    f.appendChild(factorBlock("What moves next", [moonLine]));
+
+    f.appendChild(factorBlock("The matter — " + topic.label.toLowerCase(), [
+      "The " + ordinalWord(j.quesited.house) + " house has " + j.quesited.cuspSign +
+        " on the cusp — the matter is shown by " + (j.quesited.ruler ? j.quesited.ruler.body : "its ruler") + ".",
+      j.quesited.ruler ? (j.quesited.ruler.body + " is at " + j.quesited.ruler.at + ", in the " +
+        ordinalWord(j.quesited.ruler.house) + " house" +
+        (j.quesited.ruler.flags.length ? " — " + j.quesited.ruler.flags.join("; ") : "") + ".") : null,
+      j.quesited.occupants.length ? ("In the house itself: " + j.quesited.occupants.join(", ") + ".") : null
+    ]));
+
+    const conn = [];
+    if (j.connection.sameRuler) {
+      conn.push("You and the matter share the same ruler (" + j.connection.sameRuler + ") — the two are already bound together.");
+    } else if (j.connection.between) {
+      const b = j.connection.between;
+      conn.push("Your ruler and the matter's ruler are in a " + b.aspect + " (orb " + b.orb.toFixed(1) + "°), " +
+        (b.applying ? "applying — moving toward each other." : b.separating ? "separating — the contact is already past." : "exact right now."));
+    } else {
+      conn.push("Your ruler and the matter's ruler make no direct aspect.");
+    }
+    if (j.connection.translation) {
+      conn.push(j.connection.translation.by + " passes between them — 'translation of light': a third person or circumstance carrying the matter along.");
+    }
+    f.appendChild(factorBlock("The connection", conn));
+
+    box.appendChild(f);
+    box.appendChild(el("p", { class: "small-note", text:
+      "This is what the chart of that moment holds — the pieces a horary reading weighs. It is not a yes or a no. Sit with which testimony rings true." }));
+    return box;
+  }
+
   // Shared with the Galaxy tab so "how bright is my sky" means the same
   // thing everywhere it's shown.
   function brightnessPercent(s) {
@@ -1231,6 +1520,8 @@ const UI = (function () {
 
     if (complete && !reviewMode) {
       root.appendChild(journeyMap(s, hs, today));
+      root.appendChild(horarySection(s));
+      root.appendChild(thoughtLogCard(s));
       root.appendChild(divergenceView(s, hs));
       return;
     }
@@ -1246,9 +1537,12 @@ const UI = (function () {
     }
 
     // Journey in progress: the whole-journey map first (orientation), then
-    // the day itself, browsable from Day 1 up to today.
+    // the horary bonus for any finished week, the thought log, then the day
+    // itself, browsable from Day 1 up to today.
     clampViewDay(today);
     root.appendChild(journeyMap(s, hs, today));
+    root.appendChild(horarySection(s));
+    root.appendChild(thoughtLogCard(s));
     root.appendChild(
       dayNav(viewDay, today, viewDay !== today ? function () { viewDay = null; renderCycleTab(); } : null)
     );
@@ -1332,22 +1626,34 @@ const UI = (function () {
     let saved = null;
     try { saved = localStorage.getItem(key); } catch (e) {}
 
-    const grid = el("div", { class: "practice-grid" });
-    CONTENT.PRACTICES.forEach((p) => {
-      const isSuggested = suggestion && suggestion.key === p.key;
-      const btn = el("button", {
-        type: "button",
-        class: "practice-chip" + (saved === p.key ? " active" : "") + (isSuggested ? " suggested" : ""),
-        title: p.desc,
-        text: p.label
+    // Grouped into Mind / Speech / Body — the three doors an action comes
+    // through. The suggested practice is highlighted wherever it sits.
+    (CONTENT.PRACTICE_CATEGORIES || []).forEach((catDef) => {
+      const inCat = CONTENT.PRACTICES.filter((p) => p.cat === catDef.key);
+      if (inCat.length === 0) return;
+      wrap.appendChild(el("div", { class: "practice-cat" }, [
+        el("span", { class: "practice-cat-name", text: catDef.label }),
+        el("span", { class: "practice-cat-blurb", text: catDef.blurb })
+      ]));
+      const grid = el("div", { class: "practice-grid" });
+      inCat.forEach((p) => {
+        const isSuggested = suggestion && suggestion.key === p.key;
+        const btn = el("button", {
+          type: "button",
+          class: "practice-chip" + (saved === p.key ? " active" : "") + (isSuggested ? " suggested" : ""),
+          title: p.desc,
+          text: p.label
+        });
+        btn.addEventListener("click", () => {
+          try { localStorage.setItem(key, saved === p.key ? "" : p.key); } catch (e) {}
+          renderCycleTab();
+        });
+        grid.appendChild(btn);
       });
-      btn.addEventListener("click", () => {
-        try { localStorage.setItem(key, saved === p.key ? "" : p.key); } catch (e) {}
-        renderCycleTab();
-      });
-      grid.appendChild(btn);
+      wrap.appendChild(grid);
     });
-    // "My own" sits alongside the suggestions, never replacing them.
+    // "My own" sits below the three categories, never replacing them.
+    const customGrid = el("div", { class: "practice-grid" });
     const customChip = el("button", {
       type: "button",
       class: "practice-chip" + (saved === "custom" ? " active" : ""),
@@ -1357,8 +1663,8 @@ const UI = (function () {
       try { localStorage.setItem(key, saved === "custom" ? "" : "custom"); } catch (e) {}
       renderCycleTab();
     });
-    grid.appendChild(customChip);
-    wrap.appendChild(grid);
+    customGrid.appendChild(customChip);
+    wrap.appendChild(customGrid);
 
     if (saved === "custom") {
       const ta = el("textarea", { rows: "2", class: "practice-custom", placeholder: "Your own practice for today — a few words is enough." });

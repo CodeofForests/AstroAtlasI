@@ -16,6 +16,8 @@ const STORE = (function () {
     return {
       me: null,           // { name, wall, place, unknownTime }
       others: [],          // [{ id, name, wall, place, unknownTime, consent: 'invited'|'accepted'|'declined'|'withdrawn' }]
+      thoughts: [],        // [{ id, atISO, place:{lat,lon,zone,label}, note, cycle, week }] — the horary thought log
+      horaryAsked: {},     // { "<cycle>_<week>": { thoughtId, topicKey, question, askedISO } } — one horary question per week
       cycle: {
         number: 1,
         startedAtISO: null,   // for the inception chart (Week 3 solo)
@@ -117,6 +119,31 @@ const STORE = (function () {
       s.cycle.choices[dayNum] = choice;
     });
   }
+
+  // ---- horary thought log ----
+  function addThought(entry) {
+    return update((s) => {
+      if (!s.thoughts) s.thoughts = [];
+      s.thoughts.push(Object.assign({ id: "t_" + Date.now() }, entry));
+    });
+  }
+  function updateThought(id, fields) {
+    return update((s) => {
+      const t = (s.thoughts || []).find((x) => x.id === id);
+      if (t) Object.assign(t, fields);
+    });
+  }
+  function deleteThought(id) {
+    return update((s) => {
+      s.thoughts = (s.thoughts || []).filter((x) => x.id !== id);
+    });
+  }
+  function recordHorary(key, record) {
+    return update((s) => {
+      if (!s.horaryAsked) s.horaryAsked = {};
+      s.horaryAsked[key] = record;
+    });
+  }
   function repeatCycle(mode) {
     for (var d = 1; d <= 21; d++) {
       localStorage.removeItem("aa_practice_day_" + d);
@@ -160,6 +187,10 @@ const STORE = (function () {
     markUnlocksSeen: markUnlocksSeen,
     setBrightnessMilestone: setBrightnessMilestone,
     recordChoice: recordChoice,
+    addThought: addThought,
+    updateThought: updateThought,
+    deleteThought: deleteThought,
+    recordHorary: recordHorary,
     repeatCycle: repeatCycle,
     deleteEverything: deleteEverything
   };

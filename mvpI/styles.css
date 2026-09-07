@@ -777,6 +777,16 @@ section.cs-section h2 {
 .progress-note { font-size: 12.5px; color: var(--text-faint); margin-bottom: 14px; }
 
 .practice-picker { margin-top: 14px; }
+.practice-cat { display: flex; flex-direction: column; gap: 1px; margin: 12px 0 6px; }
+.practice-cat:first-of-type { margin-top: 4px; }
+.practice-cat-name {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.practice-cat-blurb { font-size: 11px; color: var(--text-faint); line-height: 1.4; }
 .practice-grid { display: flex; flex-wrap: wrap; gap: 6px; }
 .practice-chip {
   background: var(--bg-panel);
@@ -1369,3 +1379,72 @@ section.cs-section h2 {
   .chip:active, .practice-chip:active, .fork-opt:active, .drawer-link:active,
   .day-nav-arrow:active, .edit-btn:active { transform: none; }
 }
+
+/* ---- horary thought log ---- */
+.thought-log h3 { margin: 0 0 8px; }
+.thought-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+}
+.thought-row:last-of-type { border-bottom: none; }
+.thought-body { flex: 1; min-width: 0; }
+.thought-when { font-size: 11px; color: var(--text-faint); }
+.thought-note { font-size: 12.5px; color: var(--text); line-height: 1.5; margin-top: 2px; }
+.thought-del {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-faint);
+  border-radius: 6px;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 2px 7px;
+  flex-shrink: 0;
+}
+.thought-del:hover { color: var(--large); border-color: var(--large); }
+.thought-form { margin-top: 12px; display: flex; flex-direction: column; gap: 10px; }
+.thought-log .offer-btn { width: 100%; margin-top: 10px; }
+
+/* ---- horary reveal ---- */
+.horary-card h3 { margin: 0 0 8px; }
+.horary-question {
+  font-size: 14px;
+  font-style: italic;
+  color: var(--text);
+  margin: 6px 0 10px;
+  padding-left: 12px;
+  border-left: 2px solid var(--accent);
+}
+.horary-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 14px 0 6px;
+}
+.horary-picks { display: flex; flex-wrap: wrap; gap: 6px; }
+.horary-pick {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  padding: 7px 11px;
+  border-radius: 8px;
+  font-size: 12px;
+  line-height: 1.35;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.horary-pick:hover { border-color: var(--accent); }
+.horary-pick.active { background: var(--accent-dim); border-color: var(--accent); color: #fff; }
+.horary-factors { margin-top: 10px; }
+.horary-factor {
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+}
+.horary-factor:first-child { border-top: none; }
+.horary-factor .horary-label { margin-top: 0; }
+.horary-factor .day-text { font-size: 12.5px; margin: 4px 0 0; }

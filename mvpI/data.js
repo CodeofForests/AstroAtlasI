@@ -11,6 +11,42 @@
 
 const PLANNED = [
   {
+    title: "Horary reveal — depth pass on the Goldstein-Jacobson judgement",
+    status: "open",
+    effort: "medium",
+    inProgress: false,
+    statusLabel: "First version shipped — refine the astro logic",
+    desc:
+      "The weekly horary bonus is in (see COMPLETED). js/horary.js is an honest but prototype-" +
+      "level implementation of the 'cast + highlight' read: significators (Asc ruler, Moon, " +
+      "quesited-house ruler), applying/separating between rulers, translation of light, the " +
+      "Moon's next aspect, and considerations before judgement. Known rough edges to tighten " +
+      "later: (1) applying/separating is a two-sample finite difference (now vs +1h) — fine " +
+      "for direction, not for exact orbs or speed; (2) the Moon's next-aspect search steps " +
+      "every 2h and detects perfection by sign-change or gap-collapse — reliable for " +
+      "sextile/square/trine, patched for conjunction/opposition, but not timed to the hour; " +
+      "(3) no essential-dignity scoring (Goldstein-Jacobson uses it lightly — detriment/fall/" +
+      "exaltation of the significators); (4) 'collection of light' by a slower planet isn't " +
+      "detected, only translation; (5) retrograde is derived (lon decreasing over a day) " +
+      "rather than read from the engine. All descriptive, never a yes/no — that part is by " +
+      "design and stays.",
+    dest: { tab: "cycle", subtab: null, scrollTo: null }
+  },
+  {
+    title: "Thought log — let the user see past weeks' logged thoughts",
+    status: "open",
+    effort: "small",
+    inProgress: false,
+    statusLabel: "Not started",
+    desc:
+      "The 'Strong thoughts' card on the Journey tab shows only the current week's entries " +
+      "(the week you'd be logging into). Once a week is done its thoughts still appear inside " +
+      "that week's horary card, but there's no plain way to scroll back through everything " +
+      "logged across the journey. Add a small week switcher or an 'all thoughts' view. Low " +
+      "urgency — the live-logging case works.",
+    dest: { tab: "cycle", subtab: null, scrollTo: null }
+  },
+  {
     title: "Reduce felt repetition in the 21-day loop (deeper restructure)",
     status: "open",
     effort: "medium",
@@ -413,6 +449,33 @@ const PLANNED = [
 ];
 
 const COMPLETED = [
+  {
+    date: "2026-09-07",
+    title: "Practices as Mind / Speech / Body; weekly horary bonus with a thought log",
+    desc:
+      "Two-part request. (1) PRACTICES REGROUPED into the three doors an action comes through " +
+      "— Mind (thought), Speech (word), Body (deed/sensation). content.js PRACTICES trimmed " +
+      "and re-tagged with a `cat`; three new Speech practices written (one true sentence, a " +
+      "day without complaint, ask instead of tell, an hour of chosen silence); the per-planet " +
+      "'suggested' practice still highlights wherever it sits (Mercury now suggests a Speech " +
+      "practice, Week 3 too). ui.js practicePicker renders one labelled group per category. " +
+      "(2) HORARY BONUS. New js/horary.js casts a chart for the moment a logged thought " +
+      "struck and surfaces the factors of a descriptive Goldstein-Jacobson ('Simplified " +
+      "Horary Astrology') read: the querent (Ascendant + traditional ruler + the Moon), the " +
+      "quesited (the house of the chosen matter + its ruler + occupants), applying vs " +
+      "separating between the two rulers, translation of light, the Moon's next aspect / " +
+      "void-of-course, and the 'considerations before judgement' (Asc too early/late, via " +
+      "combusta, Saturn in 1st/7th). It never returns yes/no. THOUGHT LOG: a 'Strong " +
+      "thoughts' card on the Journey tab — log the moment (note, datetime, place; place " +
+      "defaults to the birth place). One horary question PER WEEK, and the reveal for a week " +
+      "is gated until all seven of that week's days are complete. State in storage.js: " +
+      "top-level `thoughts` and `horaryAsked` ({ '<cycle>_<week>': {...} }); addThought / " +
+      "updateThought / deleteThought / recordHorary. horary.js loaded in index.html and " +
+      "build-preview.sh. Verified in the running app: grouped picker, thought logging, week-1 " +
+      "gate, cast + reveal with wheel and factor blocks — no console errors. Depth pass on " +
+      "the astro logic and a past-weeks thought view are logged as PLANNED.",
+    dest: { tab: "cycle", subtab: null, scrollTo: null }
+  },
   {
     date: "2026-09-07",
     title: "People tab: make the invite an honest simulation + email field; My Journey in the drawer",

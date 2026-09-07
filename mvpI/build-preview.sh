@@ -22,6 +22,7 @@ scripts=(
   "js/astro-engine.js"
   "js/chart.js"
   "js/chart-wheel.js"
+  "js/horary.js"
   "js/content.js"
   "js/storage.js"
   "js/ui.js"
