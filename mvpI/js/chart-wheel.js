@@ -51,6 +51,42 @@ const CHART_WHEEL = (function () {
     return { x: cx + r * Math.cos(theta), y: cy - r * Math.sin(theta) };
   }
 
+  // Turn the static SVG into something you poke at: clicking (or keyboard-
+  // selecting) a planet lights its aspect lines, dims everything else, and
+  // fires opts.onSelect(body). Clicking it again, or the empty background,
+  // clears. Pure DOM class toggling — the geometry above is untouched.
+  function wireInteractions(svg, opts) {
+    function clear() {
+      svg.classList.remove("cw-active");
+      svg.querySelectorAll(".cw-planet.is-sel").forEach((n) => n.classList.remove("is-sel"));
+      svg.querySelectorAll(".cw-aspect.is-lit").forEach((n) => n.classList.remove("is-lit"));
+      if (typeof opts.onSelect === "function") opts.onSelect(null);
+    }
+    function select(body) {
+      svg.querySelectorAll(".cw-planet.is-sel").forEach((n) => n.classList.remove("is-sel"));
+      svg.querySelectorAll(".cw-aspect.is-lit").forEach((n) => n.classList.remove("is-lit"));
+      svg.classList.add("cw-active");
+      svg.querySelectorAll('.cw-planet[data-body="' + body + '"]').forEach((n) => n.classList.add("is-sel"));
+      svg.querySelectorAll('.cw-aspect[data-a="' + body + '"], .cw-aspect[data-b="' + body + '"]')
+        .forEach((n) => n.classList.add("is-lit"));
+      if (typeof opts.onSelect === "function") opts.onSelect(body);
+    }
+    svg.addEventListener("click", (e) => {
+      const g = e.target.closest ? e.target.closest(".cw-planet") : null;
+      if (!g) { clear(); return; }
+      if (g.classList.contains("is-sel")) clear();
+      else select(g.getAttribute("data-body"));
+    });
+    svg.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      const g = e.target.closest ? e.target.closest(".cw-planet") : null;
+      if (!g) return;
+      e.preventDefault();
+      if (g.classList.contains("is-sel")) clear();
+      else select(g.getAttribute("data-body"));
+    });
+  }
+
   function build(chart, opts) {
     opts = opts || {};
     const size = opts.size || 440;
@@ -62,7 +98,7 @@ const CHART_WHEEL = (function () {
 
     const ascOffset = chart.unknownTime || chart.asc === null || chart.asc === undefined ? 0 : chart.asc;
 
-    const svg = svgEl("svg", { viewBox: "0 0 " + size + " " + size, width: "100%", class: "chart-wheel" });
+    const svg = svgEl("svg", { viewBox: "0 0 " + size + " " + size, width: "100%", class: "chart-wheel cw-enter" });
 
     // background
     svg.appendChild(svgEl("circle", { cx: cx, cy: cy, r: outerR, fill: "#12141d", stroke: "#2c3142" }));
@@ -122,7 +158,8 @@ const CHART_WHEEL = (function () {
         const style = ASPECT_STYLE[asp.aspect] || { stroke: "#6a708a", dash: null };
         const line = svgEl("line", {
           x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y,
-          stroke: style.stroke, "stroke-width": 1, opacity: 0.75
+          stroke: style.stroke, "stroke-width": 1,
+          class: "cw-aspect", "data-a": asp.a, "data-b": asp.b
         });
         if (style.dash) line.setAttribute("stroke-dasharray", style.dash);
         svg.appendChild(line);
@@ -147,13 +184,18 @@ const CHART_WHEEL = (function () {
       // tick from the zodiac ring to the exact degree
       const tickOuter = polar(cx, cy, zodiacInnerR, lon, ascOffset);
       const tickInner = polar(cx, cy, r + size * 0.03, lon, ascOffset);
-      svg.appendChild(
-        svgEl("line", { x1: tickOuter.x, y1: tickOuter.y, x2: tickInner.x, y2: tickInner.y, stroke: "#3a3f52", "stroke-width": 1 })
-      );
-
       const pos = polar(cx, cy, r, lon, ascOffset);
       const color = BODY_COLOR[body] || "#e7e9f0";
-      svg.appendChild(svgEl("circle", { cx: pos.x, cy: pos.y, r: size * 0.024, fill: "#1e2230", stroke: color, "stroke-width": 1.2 }));
+
+      // one focusable group per planet, so it can be highlighted and tapped
+      const g = svgEl("g", { class: "cw-planet", "data-body": body, tabindex: "0", role: "button" });
+      g.setAttribute("aria-label", body + " — tap to see its aspects");
+      g.appendChild(
+        svgEl("line", { x1: tickOuter.x, y1: tickOuter.y, x2: tickInner.x, y2: tickInner.y, stroke: "#3a3f52", "stroke-width": 1, class: "cw-planet-tick" })
+      );
+      // invisible larger hit target for comfortable tapping on mobile
+      g.appendChild(svgEl("circle", { cx: pos.x, cy: pos.y, r: size * 0.055, fill: "transparent", class: "cw-planet-hit" }));
+      g.appendChild(svgEl("circle", { cx: pos.x, cy: pos.y, r: size * 0.024, fill: "#1e2230", stroke: color, "stroke-width": 1.2, class: "cw-planet-dot" }));
       const glyph = svgText(pos.x, pos.y, BODY_GLYPH[body] || body[0], {
         fill: color,
         "font-size": size * 0.028,
@@ -163,7 +205,8 @@ const CHART_WHEEL = (function () {
       glyph.appendChild(svgEl("title")).textContent =
         body + " — " + ASTRO.signOf(chart.positions[body].lon) + " " + ASTRO.degInSign(chart.positions[body].lon).toFixed(1) + "°" +
         (chart.positions[body].house ? ", House " + chart.positions[body].house : "");
-      svg.appendChild(glyph);
+      g.appendChild(glyph);
+      svg.appendChild(g);
     });
 
     // ASC/MC labels
@@ -174,6 +217,7 @@ const CHART_WHEEL = (function () {
       svg.appendChild(svgText(mcPos.x, mcPos.y, "MC", { fill: "#8b7cf6", "font-size": size * 0.024, "text-anchor": "middle", "dominant-baseline": "central" }));
     }
 
+    wireInteractions(svg, opts);
     return svg;
   }
 

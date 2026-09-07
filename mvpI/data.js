@@ -11,6 +11,170 @@
 
 const PLANNED = [
   {
+    title: "Further motion polish (aspect lines drawing in, scroll parallax, headline reveal)",
+    status: "open",
+    effort: "small",
+    inProgress: false,
+    statusLabel: "Not started — leftovers from the 'make it feel alive' pass",
+    desc:
+      "The core feel-alive layer shipped (see COMPLETED: interactive wheel, journey sky, step " +
+      "transitions, tactile press). Remaining smaller ideas from that discussion, each " +
+      "optional: (1) aspect lines on the wheel literally draw themselves once on first render " +
+      "(stroke-dashoffset) rather than fading in — held back because several aspect styles " +
+      "already use dash patterns and would need per-line handling; (2) parallax the two " +
+      "background starfield layers at slightly different speeds on scroll; (3) the key " +
+      "placement line in a reveal ('Mars in Leo, 7th house') fades in word-by-word instead of " +
+      "all at once — headline only, never body copy. All must respect prefers-reduced-motion.",
+    dest: { tab: "mychart", subtab: null, scrollTo: null }
+  },
+  {
+    title: "Second/third cycle: same chart, new lens (outer planets, houses, or tightest aspects)",
+    status: "open",
+    effort: "large",
+    inProgress: false,
+    statusLabel: "Not started — the 'what's left after 21 days' question",
+    desc:
+      "After the 21-day journey there is currently only 'repeat the same cycle'. Idea from the " +
+      "explore-more discussion: additional finite cycles that re-read the SAME birth chart " +
+      "through a different cut, no new astronomy needed. Candidates: (a) the outer planets " +
+      "(Uranus/Neptune/Pluto/Chiron) framed as 'the parts of you that move slowly'; (b) a " +
+      "walk through the 12 houses ('your 4th - home and roots'); (c) your 3-5 tightest-orb " +
+      "aspects as 'two parts of you in tension' (the engine already finds the tightest one " +
+      "for the skeptic teaser). Mostly a content build (content.js) plus a cycle-picker; the " +
+      "chart engine and journey scaffolding are reused. Pick one to prototype first.",
+    dest: { tab: "cycle", subtab: null, scrollTo: null }
+  },
+  {
+    title: "Cycle memory: show your previous cycle's answers beside the new ones",
+    status: "open",
+    effort: "medium",
+    inProgress: false,
+    statusLabel: "Not started",
+    desc:
+      "Repeat-cycle already exists (STORE.repeatCycle bumps cycle.number and clears " +
+      "completedDays/choices/practice keys). Idea: instead of wiping the slate, carry the " +
+      "prior cycle's daily fork choices and body-log entries forward read-only, and on each " +
+      "day of cycle 2+ show 'last time on Day 5 you leaned with the pattern - this time?'. " +
+      "Makes change visible by direct comparison rather than a score. Needs the repeat flow " +
+      "to archive the old cycle instead of clearing it, and the day view to render a 'last " +
+      "time' strip. Ties into the measuring-change item below.",
+    dest: { tab: "cycle", subtab: null, scrollTo: null }
+  },
+  {
+    title: "Yearly solar-return check-in",
+    status: "open",
+    effort: "medium",
+    inProgress: false,
+    statusLabel: "Not started",
+    desc:
+      "A light recurring touchpoint for people who finished a cycle and want an ongoing " +
+      "reason to come back: once a year, around the user's birthday, cast the chart for the " +
+      "exact solar-return moment and offer one short reflective session on 'the year's " +
+      "theme'. Ceremonial, not a full cycle. Reuses computeChart; needs a date trigger and " +
+      "one new content template. Cheaper than the transits layer and a good stepping stone " +
+      "toward it.",
+    dest: { tab: "cycle", subtab: null, scrollTo: null }
+  },
+  {
+    title: "Transits layer: what the sky is doing now vs. your birth chart",
+    status: "open",
+    effort: "large",
+    inProgress: false,
+    statusLabel: "Not started - Phase 5 (needs time-based regression work)",
+    desc:
+      "The birth chart is fixed; the sky keeps moving. A weekly or monthly note - 'Saturn is " +
+      "sitting on your natal Moon right now; here is the tension that names' - is what turns " +
+      "the product from a one-off into a habit, and is the real answer to 'is there more " +
+      "after 21 days'. Already named as Phase 5 in RELEASE_PLAN.md. Not near-term: time-based " +
+      "positions compound the DST / historical-offset problems Phase 0 solved for birth " +
+      "charts, so it needs its own regression set, and it should wait until the real Swiss " +
+      "Ephemeris is in. Logged here so the roadmap conversation has a card for it.",
+    dest: { tab: "cycle", subtab: null, scrollTo: null }
+  },
+  {
+    title: "Share one insight card as an image or link",
+    status: "open",
+    effort: "medium",
+    inProgress: false,
+    statusLabel: "Not started - privacy-sensitive",
+    desc:
+      "From the 'share my insights with others' discussion. Let a user publish ONE gift/cost " +
+      "card of their choosing as an image or a link - 'this is what I learned about myself'. " +
+      "Stays inside the privacy rules: Weeks 1-2 journal and all reflection text remain " +
+      "private forever with no export path (product description sec 8-9); only a single card " +
+      "the user deliberately chooses to share leaves the app, and only their own - never " +
+      "another person's chart or a Galaxy view (enforced at the share layer, not just hidden " +
+      "in the UI). Needs a card-to-image renderer and a share sheet.",
+    dest: { tab: "mychart", subtab: null, scrollTo: null }
+  },
+  {
+    title: "Send a friend their tightest aspect (gift + referral hook)",
+    status: "open",
+    effort: "medium",
+    inProgress: false,
+    statusLabel: "Not started",
+    desc:
+      "The no-commitment skeptic teaser (birth date only, reveals the single tightest-orb " +
+      "aspect) but pointed outward: generate it for a friend from their birth date and send " +
+      "it as a small gift, with a link back into the app. Low-commitment hook that doubles as " +
+      "organic referral. Reuses the teaser's engine path; needs a 'for someone else' entry " +
+      "point and a shareable result page. No data stored about the friend unless they " +
+      "themselves start.",
+    dest: { tab: "teaser", subtab: null, scrollTo: null }
+  },
+  {
+    title: "Post-Week-3 shared dynamic + one mutual practice (no compatibility score)",
+    status: "open",
+    effort: "medium",
+    inProgress: false,
+    statusLabel: "Not started - needs two real consenting accounts (Phase 3)",
+    desc:
+      "Once two people have both completed Week 3 with each other (mutual consent already " +
+      "modelled in People/Galaxy), offer a single shared reflection: the ONE dynamic both " +
+      "charts point at, plus one small practice each person could do. Never a compatibility " +
+      "percentage or a ranking - that is a stated red line (product description sec 8, sec 10). " +
+      "One actionable thing, mutual. Depends on the real two-account backend (see the backend " +
+      "item) since it needs both people's real consent state, not the local simulation.",
+    dest: { tab: "galaxy", subtab: null, scrollTo: null }
+  },
+  {
+    title: "Reflect change back to the user (before/after in their own words, cross-cycle trends)",
+    status: "open",
+    effort: "medium",
+    inProgress: false,
+    statusLabel: "Not started - design decision needed on wording",
+    desc:
+      "The product's goal is 'unconscious -> conscious', so success shown to the user must be " +
+      "a mirror, never a grade (no scores/rankings - product description sec 8). Pieces: (1) Day 1 " +
+      "asks one open sentence - 'how do you tend to [the Sun theme]?'; Day 21 shows it back " +
+      "and asks again, both on screen. (2) One repeated question at each cycle's end - 'since " +
+      "starting, have you caught yourself mid-pattern and chosen differently? never / once or " +
+      "twice / often' - one tap, stored, becomes a gentle line over cycles. (3) Cross-cycle " +
+      "views of the existing data: the daily-fork strip and the 'what your body noticed' " +
+      "trend, cycle over cycle, stated as observation not improvement. Builds on the Day-21 " +
+      "divergence screen that already exists.",
+    dest: { tab: "cycle", subtab: null, scrollTo: null }
+  },
+  {
+    title: "Team-side signal that the product actually works",
+    status: "open",
+    effort: "medium",
+    inProgress: false,
+    statusLabel: "Not started - partly blocked on the real backend",
+    desc:
+      "Aggregate measurement for the team (not shown to users as a grade, so it can be more " +
+      "quantitative). Strongest signal: do people start a second cycle (return rate). Then: " +
+      "population-level shift in the daily-fork distribution across cycles (are people moving " +
+      "toward conscious choice), Week 3 completion rate (the known drop-off), and the opt-in " +
+      "Day-1/Day-21 self-description pairs as qualitative material. Optional research rigour: " +
+      "a short opt-in self-report (a few items adapted from an existing self-reflection / " +
+      "insight or mindfulness scale) at cycle start and end, kept out of the main flow. Needs " +
+      "the real backend and an analytics decision - framing: primary success is 'people " +
+      "report catching themselves more often' + they come back; do not build it as if 21 " +
+      "days can prove lasting behaviour change.",
+    dest: { tab: "cycle", subtab: null, scrollTo: null }
+  },
+  {
     title: "Rights / attribution pass on the daily reflection quotes before launch",
     status: "open",
     effort: "small",
@@ -94,30 +258,19 @@ const PLANNED = [
       "is a one-line change once there's a reason to revisit it."
   },
   {
-    title: "Add an earned-surprise moment when a new star/reveal unlocks",
-    status: "open",
-    effort: "medium",
-    inProgress: false,
-    statusLabel: "Not started",
-    desc:
-      "Deferred from the curiosity-roadmap build (see completed log): right now an unlocked " +
-      "strength tile just quietly becomes clickable — there's no moment that marks it. A small " +
-      "animation or highlight the first time a new tile unlocks (or the first time the Galaxy " +
-      "brightness bar crosses a threshold) would make progress feel earned rather than just " +
-      "counted, closer to the \"always one more surprising thing\" goal than a flat unlock."
-  },
-  {
     title: "Dim not-yet-reached bodies on the chart wheel itself",
     status: "open",
     effort: "small",
     inProgress: false,
-    statusLabel: "Not started",
+    statusLabel: "Mostly superseded — revisit only for the cost-gating cue",
     desc:
-      "Companion to the strengths-tile progressive reveal: the chart wheel currently always " +
-      "shows every body at full brightness, even ones whose interpretation is still locked. " +
-      "Visually dimming (not hiding — the position is real data and stays visible) the glyphs " +
-      "for bodies not yet reached in the journey would tie the wheel and the tiles together " +
-      "into one consistent reveal story, without hiding any actual astronomical fact."
+      "Original idea: dim the wheel glyphs for bodies whose interpretation is still locked, " +
+      "to match the strengths-tile reveal. Two things changed since: (1) all seven gift " +
+      "readings now show from the first visit (see COMPLETED), so there are no locked gift " +
+      "bodies to dim; (2) the wheel is now interactive (see COMPLETED) — selecting a planet " +
+      "already dims every other body. What's left of this idea: a faint cue on a body whose " +
+      "Week-2 cost half isn't unlocked yet. Low value now; only worth doing if the cost " +
+      "gating needs to be more visible on the wheel."
   },
   {
     title: "Move from browser-local storage to a real backend + accounts",
@@ -225,6 +378,63 @@ const PLANNED = [
 ];
 
 const COMPLETED = [
+  {
+    date: "2026-09-07",
+    title: "Make it feel alive: interactive chart wheel, journey sky, step transitions, tactile press",
+    desc:
+      "First pass on Lindsey's ask to move the app from 'a bit static' to 'feels like playing " +
+      "and exploring', kept minimalist (motion is only ever feedback or wayfinding, never " +
+      "decoration). Four pieces: (1) INTERACTIVE CHART WHEEL — each planet is now a focusable " +
+      "group (js/chart-wheel.js); tapping or keyboard-selecting one lights its aspect lines, " +
+      "dims every other planet and line, and updates a caption under the wheel ('Moon in " +
+      "Pisces 15.6 deg, House 5 — 5 major aspects lit above'); tap again or tap empty space to " +
+      "clear. Aspect lines carry data-a/data-b; larger invisible hit targets for mobile. The " +
+      "wheel also assembles in once (rotate+fade). (2) JOURNEY SKY — the Home starfield gains " +
+      "one bright star for every completed cycle day (app.js renderJourneySky, deterministic " +
+      "scatter so they stay put and only accumulate), the newest one arriving with a flare. " +
+      "Progress you can see as light, no number. (3) STEP TRANSITIONS — each tabpanel fades " +
+      "and lifts in when it becomes active, so moving through the flow reads as travel. (4) " +
+      "TACTILE PRESS — every tappable surface springs back slightly on :active. All four " +
+      "honour prefers-reduced-motion. Verified in the running app: wheel select/clear + " +
+      "caption, 12-star sky, no console errors.",
+    dest: { tab: "mychart", subtab: null, scrollTo: null }
+  },
+  {
+    date: "2026-09-07",
+    title: "Show all 7 strength gifts up front; gate only the Week-2 cost halves",
+    desc:
+      "From the first round of Wednesday team review: a tester (the second person to hit it) " +
+      "commented on the demo that on 'Viewing my chart' every strength card was locked on a " +
+      "first visit, leaving 'Start the 21-day journey' as the only action — no interpretive " +
+      "payoff before committing. Lindsey's call: stop gating the gift readings entirely. All " +
+      "seven gift tiles now render fully on the first visit; only the COST half of each pair " +
+      "stays paced to that body's Week 2 day (idx + 8), so a limitation still never lands " +
+      "before its strength (product description §3). Removed the giftUnlocked / locked-tile " +
+      "branch in js/ui.js strengthsWeaknessesCard and the dead .sw-tile.locked CSS; intro copy " +
+      "now reads 'All seven strengths are here from the start… the cost half unlocks as your " +
+      "journey reaches Week 2.' The earned-surprise pop now fires only for the 7 cost reveals " +
+      "(Days 8–14) plus the Galaxy brightness thresholds. Replied in the artifact comment " +
+      "thread; demo link rebuilt.",
+    dest: { tab: "mychart", subtab: null, scrollTo: null }
+  },
+  {
+    date: "2026-09-07",
+    title: "Earned-surprise moment when a new reveal / brightness threshold unlocks",
+    desc:
+      "Deferred from the curiosity roadmap: an unlocked strength tile used to just quietly " +
+      "become clickable. Now the FIRST time each reveal opens it gets a one-time marked moment. " +
+      "(1) Chart step (My chart → 'Viewing my chart'): a newly-available tile plays a scale/glow " +
+      "pop with a gold 'Just unlocked' (or 'Cost revealed') badge, staggered when several land " +
+      "at once, plus a '✦ N new reveals just opened up — your journey earned it' banner above " +
+      "the grid and a toast; the card scrolls itself into view. (2) Galaxy tab: the brightness " +
+      "bar glows and shows '✦ Your sky just crossed 25/50/75/100%' the first time it passes " +
+      "each quarter. State lives in cycle.seenUnlocks (['gift:Mars','cost:Venus',…]) and " +
+      "cycle.brightnessMilestone in storage.js — both reset by repeatCycle and cleared by " +
+      "delete-everything, so a repeat journey replays the surprises. The moment only fires while " +
+      "its panel is actually on screen (renderAll can rebuild off-screen), and honours " +
+      "prefers-reduced-motion with a static highlight instead of animation.",
+    dest: { tab: "mychart", subtab: null, scrollTo: null }
+  },
   {
     date: "2026-09-06",
     title: "Body log: free-text \"something else\" on both rows + an in-place \"why the body?\" explainer",

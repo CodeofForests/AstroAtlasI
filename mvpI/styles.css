@@ -249,6 +249,15 @@ body.is-home main { max-width: none; padding: 0; }
 .tabpanel { display: none; }
 .tabpanel.active { display: block; }
 
+/* Gentle step-to-step transition — each panel fades and lifts in as it
+   becomes active, so moving through the flow reads as travel, not a
+   tab-swap. */
+@keyframes panel-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+.tabpanel.active { animation: panel-in 0.28s ease both; }
+
 /* ---- Step 1: home hero ---- */
 
 .hero {
@@ -266,6 +275,41 @@ body.is-home main { max-width: none; padding: 0; }
   inset: 0;
   background: radial-gradient(ellipse 70% 50% at 50% 42%, rgba(139,124,246,0.20), transparent 70%);
   pointer-events: none;
+}
+
+/* ---- journey sky: one earned star per completed cycle day ---- */
+.journey-sky {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.journey-star {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 6px 1px rgba(232, 224, 180, 0.9), 0 0 2px 0 #fff;
+  opacity: 0.85;
+  animation: journey-twinkle 3.4s ease-in-out infinite;
+  animation-delay: var(--tw-delay, 0s);
+}
+.journey-star.is-new {
+  animation: journey-star-arrive 1.6s ease-out both, journey-twinkle 3.4s ease-in-out 1.6s infinite;
+}
+@keyframes journey-twinkle {
+  0%, 100% { opacity: 0.85; transform: scale(1); }
+  50%      { opacity: 0.4; transform: scale(0.8); }
+}
+@keyframes journey-star-arrive {
+  0%   { opacity: 0; transform: scale(0.2); box-shadow: 0 0 0 0 rgba(232, 224, 180, 0); }
+  40%  { opacity: 1; transform: scale(1.7); box-shadow: 0 0 14px 4px rgba(232, 224, 180, 0.95); }
+  100% { opacity: 0.85; transform: scale(1); box-shadow: 0 0 6px 1px rgba(232, 224, 180, 0.9); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .journey-star, .journey-star.is-new { animation: none; opacity: 0.8; }
 }
 .hero-inner {
   position: relative;
@@ -1006,13 +1050,117 @@ section.cs-section h2 {
 }
 .sw-tile-cost { border-top: 1px dashed var(--border); padding-top: 8px; }
 
-.sw-tile.locked {
-  cursor: default;
-  border-left-color: var(--border);
-  opacity: 0.55;
+/* ---- earned-surprise: a reveal just unlocked ---- */
+
+.sw-tile { position: relative; }
+
+.sw-tile.just-unlocked {
+  animation: aa-unlock-pop 1.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--unlock-delay, 0ms);
 }
-.sw-tile.locked:hover { background: var(--bg-panel); }
-.sw-tile.locked .sw-tile-glyph { color: var(--text-faint); }
+
+@keyframes aa-unlock-pop {
+  0%   { transform: scale(0.94); box-shadow: 0 0 0 0 rgba(232, 179, 76, 0); background: var(--bg-panel); }
+  12%  { transform: scale(1.03); box-shadow: 0 0 0 4px rgba(232, 179, 76, 0.35), 0 0 22px 2px rgba(139, 124, 246, 0.45); background: var(--bg-card-hover); }
+  45%  { transform: scale(1); box-shadow: 0 0 0 2px rgba(232, 179, 76, 0.22), 0 0 14px 1px rgba(139, 124, 246, 0.25); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(232, 179, 76, 0); background: var(--bg-panel); }
+}
+
+.sw-unlock-badge {
+  position: absolute;
+  top: -8px;
+  right: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #1a1200;
+  background: linear-gradient(90deg, var(--gold), #f3cf86);
+  padding: 3px 8px;
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  animation: aa-badge-in 0.5s ease both;
+  animation-delay: var(--unlock-delay, 0ms);
+}
+
+@keyframes aa-badge-in {
+  0%   { opacity: 0; transform: translateY(4px) scale(0.8); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.sw-reveal-burst {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 2px;
+  padding: 9px 12px;
+  border-radius: 9px;
+  font-size: 12.5px;
+  color: var(--text);
+  background: rgba(139, 124, 246, 0.14);
+  border: 1px solid rgba(232, 179, 76, 0.35);
+  animation: aa-burst-in 0.55s ease both;
+}
+
+.sw-reveal-burst-spark {
+  color: var(--gold);
+  font-size: 15px;
+  animation: aa-spark 1.4s ease-in-out infinite;
+}
+
+@keyframes aa-burst-in {
+  0%   { opacity: 0; transform: translateY(-6px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes aa-spark {
+  0%, 100% { opacity: 0.55; transform: scale(0.9) rotate(0deg); }
+  50%      { opacity: 1; transform: scale(1.15) rotate(20deg); }
+}
+
+/* brightness bar crossing a quarter threshold */
+.brightness-bar-wrap.just-brightened .brightness-bar {
+  box-shadow: 0 0 0 2px rgba(232, 179, 76, 0.3), 0 0 16px 2px rgba(139, 124, 246, 0.4);
+  animation: aa-bar-glow 2.2s ease-out both;
+}
+.brightness-bar-wrap.just-brightened .brightness-fill {
+  animation: aa-fill-sheen 1.4s ease-in-out 2;
+}
+@keyframes aa-bar-glow {
+  0%   { box-shadow: 0 0 0 0 rgba(232, 179, 76, 0); }
+  20%  { box-shadow: 0 0 0 3px rgba(232, 179, 76, 0.4), 0 0 20px 3px rgba(139, 124, 246, 0.5); }
+  100% { box-shadow: 0 0 0 0 rgba(232, 179, 76, 0); }
+}
+@keyframes aa-fill-sheen {
+  0%   { filter: brightness(1); }
+  50%  { filter: brightness(1.6); }
+  100% { filter: brightness(1); }
+}
+.brightness-burst {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--gold);
+  animation: aa-burst-in 0.55s ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sw-tile.just-unlocked,
+  .sw-unlock-badge,
+  .sw-reveal-burst,
+  .sw-reveal-burst-spark,
+  .brightness-bar-wrap.just-brightened .brightness-bar,
+  .brightness-bar-wrap.just-brightened .brightness-fill,
+  .brightness-burst {
+    animation: none;
+  }
+  /* keep a static, non-animated highlight so the moment still reads */
+  .sw-tile.just-unlocked {
+    box-shadow: 0 0 0 2px rgba(232, 179, 76, 0.3);
+    background: var(--bg-card-hover);
+  }
+  .brightness-bar-wrap.just-brightened .brightness-bar {
+    box-shadow: 0 0 0 2px rgba(232, 179, 76, 0.3);
+  }
+}
 
 /* ---- Home "continue your journey" teaser ---- */
 
@@ -1031,7 +1179,7 @@ section.cs-section h2 {
 .chart-wheel-wrap {
   display: flex;
   justify-content: center;
-  margin: 6px 0 16px;
+  margin: 6px 0 6px;
 }
 .chart-wheel {
   max-width: 420px;
@@ -1039,3 +1187,79 @@ section.cs-section h2 {
   height: auto;
 }
 .chart-wheel text { user-select: none; }
+
+/* ---- interactive chart wheel ---- */
+
+.chart-wheel .cw-aspect { opacity: 0.75; transition: opacity 0.18s ease, stroke-width 0.18s ease; }
+.chart-wheel .cw-planet { cursor: pointer; }
+.chart-wheel .cw-planet:focus { outline: none; }
+.chart-wheel .cw-planet-dot,
+.chart-wheel .cw-planet .cw-planet-tick { transition: stroke-width 0.15s ease, opacity 0.18s ease; }
+.chart-wheel .cw-planet:hover .cw-planet-dot,
+.chart-wheel .cw-planet:focus .cw-planet-dot { stroke-width: 2.6; }
+
+/* when a planet is selected: dim the crowd, light only its lines */
+.chart-wheel.cw-active .cw-planet { opacity: 0.32; }
+.chart-wheel.cw-active .cw-planet.is-sel { opacity: 1; }
+.chart-wheel.cw-active .cw-planet.is-sel .cw-planet-dot { stroke-width: 2.8; }
+.chart-wheel.cw-active .cw-aspect { opacity: 0.07; }
+.chart-wheel.cw-active .cw-aspect.is-lit { opacity: 0.95; stroke-width: 1.7; }
+
+/* one-time assemble-in when the wheel first renders */
+@keyframes cw-in {
+  from { opacity: 0; transform: rotate(-7deg) scale(0.955); }
+  to   { opacity: 1; transform: none; }
+}
+.chart-wheel.cw-enter { animation: cw-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; transform-origin: 50% 50%; }
+
+.wheel-caption {
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-faint);
+  margin: 0 0 16px;
+  min-height: 1.5em;
+  transition: color 0.18s ease;
+}
+.wheel-caption.is-active { color: var(--text-dim); }
+
+@media (prefers-reduced-motion: reduce) {
+  .chart-wheel.cw-enter { animation: none; }
+}
+
+/* ---- tactile micro-interactions ---- */
+/* Every tappable surface gives a small springy push-back on press, so the
+   whole app feels responsive to touch rather than like page loads. */
+.category-card,
+.sw-tile,
+.primary-btn,
+.offer-btn,
+.chip,
+.practice-chip,
+.fork-opt,
+.drawer-link,
+.day-nav-arrow,
+.edit-btn {
+  transition: transform 0.12s cubic-bezier(0.22, 1, 0.36, 1),
+              background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.category-card:active,
+.sw-tile:active,
+.primary-btn:active,
+.offer-btn:active,
+.chip:active,
+.practice-chip:active,
+.fork-opt:active,
+.drawer-link:active,
+.day-nav-arrow:active,
+.edit-btn:active {
+  transform: scale(0.96);
+}
+.primary-btn:not(:disabled):hover { box-shadow: 0 4px 16px -4px rgba(139, 124, 246, 0.6); }
+
+@media (prefers-reduced-motion: reduce) {
+  .tabpanel.active { animation: none; }
+  .category-card:active, .sw-tile:active, .primary-btn:active, .offer-btn:active,
+  .chip:active, .practice-chip:active, .fork-opt:active, .drawer-link:active,
+  .day-nav-arrow:active, .edit-btn:active { transform: none; }
+}

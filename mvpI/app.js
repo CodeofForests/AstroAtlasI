@@ -365,6 +365,9 @@
 
   let lastFlowTab = "birthdata";
   window.APP_BACK = () => { location.hash = "#" + lastFlowTab; };
+  // Exposed so js/ui.js (a separate IIFE) can raise the shared toast for
+  // earned-surprise moments when a reveal or brightness threshold unlocks.
+  window.APP_TOAST = toast;
 
   function renderStepNav(current) {
     const nav = document.getElementById("step-nav");
@@ -416,6 +419,7 @@
     if (name === "construction") render();
     if (name === "home") {
       renderHomeCategories();
+      renderJourneySky();
       // "Continue your journey" teaser is built (js/ui.js renderHomeTeaser)
       // but parked for now per user request — not called here on purpose.
       // Re-enable by adding: if (typeof UI !== "undefined") UI.renderHomeTeaser();
@@ -438,6 +442,40 @@
     { label: "My job", needsChart: true, target: "domain", domain: "job" },
     { label: "My health", needsChart: true, target: "domain", domain: "health" }
   ];
+
+  // The Home starfield gains one bright "journey star" for every day of the
+  // 21-day cycle already completed — progress you can see filling in your
+  // own sky, no number attached. Positions are deterministic per index so
+  // the same stars stay put between visits; they only accumulate.
+  function renderJourneySky() {
+    const hero = document.querySelector(".hero");
+    if (!hero) return;
+    let sky = hero.querySelector(".journey-sky");
+    if (!sky) {
+      sky = document.createElement("div");
+      sky.className = "journey-sky";
+      sky.setAttribute("aria-hidden", "true");
+      hero.insertBefore(sky, hero.firstChild);
+    }
+    const done = Math.min(STORE.get().cycle.completedDays.length, 21);
+    if (Number(sky.dataset.count) === done) return;
+    sky.dataset.count = String(done);
+    sky.innerHTML = "";
+    for (let i = 0; i < done; i++) {
+      // cheap deterministic scatter from the index
+      const a = Math.sin(i * 12.9898) * 43758.5453;
+      const b = Math.sin(i * 78.233) * 12543.1234;
+      const left = Math.abs(a - Math.floor(a)) * 100;
+      const top = Math.abs(b - Math.floor(b)) * 92 + 2;
+      const star = document.createElement("span");
+      star.className = "journey-star";
+      star.style.left = left.toFixed(2) + "%";
+      star.style.top = top.toFixed(2) + "%";
+      star.style.setProperty("--tw-delay", (i % 7) * 0.55 + "s");
+      if (i === done - 1) star.classList.add("is-new");
+      sky.appendChild(star);
+    }
+  }
 
   function renderHomeCategories() {
     const grid = document.getElementById("category-grid");

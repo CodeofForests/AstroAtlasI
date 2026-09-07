@@ -36,6 +36,14 @@ const UI = (function () {
     });
   }
 
+  function prefersReducedMotion() {
+    return !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  }
+  function panelIsActive(tab) {
+    const p = document.querySelector('.tabpanel[data-tab="' + tab + '"]');
+    return !!p && p.classList.contains("active");
+  }
+
   // ---------- state helpers ----------
   function getHouseSystemPref() {
     return localStorage.getItem("aa_house_system") || "placidus";
@@ -172,11 +180,13 @@ const UI = (function () {
   // Progressive reveal: the chart wheel and exact-degree/aspect data stay
   // fully visible always — that's computed astronomical fact, and hiding
   // real data to manufacture suspense would undercut the "this is science,
-  // not esoteric" positioning. What's genuinely paced, the way a guided
-  // program legitimately is, is the INTERPRETATION: a body's strength tile
-  // unlocks on the journey day that covers it, and its cost half unlocks on
-  // that same body's Week 2 day — mirroring the real Week 1/Week 2 pacing
-  // instead of dumping all 21 days of insight on day one.
+  // not esoteric" positioning. All seven strength (gift) readings are also
+  // shown from the start — team review found that gating them too left a
+  // first-time visitor with a wall of padlocks and nothing to read. What's
+  // still paced, mirroring the real Week 1/Week 2 structure, is only the
+  // COST half of each pair: it unlocks on that body's Week 2 day (idx + 8),
+  // so a limitation never lands before the strength it belongs to has been
+  // sat with (product description §3's structural rule).
   function strengthsWeaknessesCard(chart) {
     const wrap = el("div", { class: "card sw-card" });
     if (chart.unknownTime) {
@@ -185,39 +195,46 @@ const UI = (function () {
       );
     }
     wrap.appendChild(
-      el("p", { class: "small-note", text: "Tap a card to see the cost of that same strength — never a separate list of flaws. Locked cards unlock as your journey reaches that day." })
+      el("p", { class: "small-note", text: "All seven strengths are here from the start. Tap a card to see the cost of that same strength — never a separate list of flaws. The cost half unlocks as your journey reaches Week 2." })
     );
 
     const s = STORE.get();
     const completed = s.cycle.completedDays.length;
     const grid = el("div", { class: "sw-grid" });
 
+    // Earned-surprise moment: the first time a tile (or its cost half)
+    // becomes available, mark it with a one-time "just unlocked" animation
+    // instead of letting it quietly appear. Keys already celebrated live in
+    // s.cycle.seenUnlocks; anything new this render goes in freshKeys and is
+    // marked seen once, so a later revisit of the chart stays calm.
+    const seen = s.cycle.seenUnlocks || [];
+    const freshKeys = [];
+    // Only run the reveal (animation + mark-as-seen) when the chart step is
+    // actually on screen — renderAll() can rebuild this card off-screen, and
+    // we don't want the moment spent while nobody's looking.
+    const revealLive = panelIsActive("mychart");
+    let freshOrder = 0;
+    function markFresh(tile, key, label) {
+      if (seen.indexOf(key) !== -1) return;
+      freshKeys.push(key);
+      if (!revealLive || tile.__celebrated) return;
+      tile.__celebrated = true;
+      tile.classList.add("just-unlocked");
+      tile.style.setProperty("--unlock-delay", (freshOrder++ * 140) + "ms");
+      tile.appendChild(el("span", { class: "sw-unlock-badge", text: label }));
+    }
+
     CONTENT.WEEK_BODIES.forEach((body, idx) => {
       const p = chart.positions[body];
       if (!p) return;
-      const giftDay = idx + 1;
       const costDay = idx + 8;
-      const giftUnlocked = completed >= giftDay;
       const costUnlocked = completed >= costDay;
 
       const sign = ASTRO.signOf(p.lon);
       const color = CHART_WHEEL.BODY_COLOR[body] || "#8b7cf6";
       const glyph = CHART_WHEEL.BODY_GLYPH[body] || body[0];
 
-      const tile = el("div", { class: "sw-tile" + (giftUnlocked ? "" : " locked"), style: "--tile-color:" + color });
-
-      if (!giftUnlocked) {
-        tile.appendChild(
-          el("div", { class: "sw-tile-header" }, [
-            el("span", { class: "sw-tile-glyph", text: "🔒" }),
-            el("span", { class: "sw-tile-name", text: body }),
-            el("span", { class: "sw-tile-sign", text: "Day " + giftDay })
-          ])
-        );
-        tile.appendChild(el("p", { class: "sw-tile-text", text: "Unlocks on Day " + giftDay + " of your journey." }));
-        grid.appendChild(tile);
-        return;
-      }
+      const tile = el("div", { class: "sw-tile", style: "--tile-color:" + color });
 
       const giftText = CONTENT.dayContent("gift", body, sign, p.house);
       const costText = costUnlocked ? CONTENT.dayContent("cost", body, sign, p.house) : null;
@@ -246,8 +263,30 @@ const UI = (function () {
       tile.appendChild(header);
       tile.appendChild(front);
       tile.appendChild(back);
+
+      if (costUnlocked) markFresh(tile, "cost:" + body, "Cost revealed");
+
       grid.appendChild(tile);
     });
+
+    if (revealLive && freshKeys.length) {
+      const n = freshKeys.length;
+      wrap.appendChild(
+        el("div", { class: "sw-reveal-burst" }, [
+          el("span", { class: "sw-reveal-burst-spark", text: "✦" }),
+          el("span", { text: n === 1
+            ? "A new reveal just opened up — your journey earned it."
+            : n + " new reveals just opened up — your journey earned them." })
+        ])
+      );
+      STORE.markUnlocksSeen(freshKeys);
+      if (window.APP_TOAST) {
+        window.APP_TOAST(n === 1 ? "✦ New reveal unlocked" : "✦ " + n + " new reveals unlocked");
+      }
+      requestAnimationFrame(() => {
+        try { wrap.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "center" }); } catch (e) {}
+      });
+    }
 
     wrap.appendChild(grid);
     return wrap;
@@ -418,8 +457,25 @@ const UI = (function () {
     }
 
     const wheelWrap = el("div", { class: "chart-wheel-wrap" });
-    wheelWrap.appendChild(CHART_WHEEL.build(chart));
+    const wheelCaption = el("p", { class: "wheel-caption", text: "Tap a planet to see how it connects to the rest of your chart." });
+    wheelWrap.appendChild(CHART_WHEEL.build(chart, {
+      onSelect: (body) => {
+        if (!body) {
+          wheelCaption.textContent = "Tap a planet to see how it connects to the rest of your chart.";
+          wheelCaption.classList.remove("is-active");
+          return;
+        }
+        const p = chart.positions[body];
+        const n = (chart.aspects || []).filter((a) => a.a === body || a.b === body).length;
+        wheelCaption.textContent =
+          body + " in " + ASTRO.signOf(p.lon) + " " + fmtDeg(ASTRO.degInSign(p.lon)) +
+          (p.house ? " · House " + p.house : "") +
+          " — " + (n === 0 ? "no major aspects" : n + " major aspect" + (n === 1 ? "" : "s") + " lit above");
+        wheelCaption.classList.add("is-active");
+      }
+    }));
     wrap.appendChild(wheelWrap);
+    wrap.appendChild(wheelCaption);
 
     const table = el("div", { class: "positions-table detail-panel" });
     ASTRO.BODY_ORDER.filter((b) => b !== "SouthNode").forEach((body) => {
@@ -1256,13 +1312,26 @@ const UI = (function () {
 
     const brightness = brightnessPercent(s);
 
+    // Earned-surprise moment: mark the first time brightness crosses each
+    // quarter threshold rather than letting the bar creep up unremarked.
+    const THRESHOLDS = [25, 50, 75, 100];
+    const prevMilestone = s.cycle.brightnessMilestone || 0;
+    const reached = THRESHOLDS.filter((t) => brightness >= t);
+    const topReached = reached.length ? reached[reached.length - 1] : 0;
+    const crossedNow = brightness >= 25 && topReached > prevMilestone && panelIsActive("galaxy");
+
     root.appendChild(el("h2", { text: "Your Galaxy" }));
-    root.appendChild(
-      el("div", { class: "brightness-bar-wrap" }, [
-        el("div", { class: "small-note", text: "Brightness: " + brightness + "% — earned by taking in gift and cost together, never purchasable." }),
-        el("div", { class: "brightness-bar" }, [el("div", { class: "brightness-fill", style: "width:" + brightness + "%" })])
-      ])
-    );
+    const barWrap = el("div", { class: "brightness-bar-wrap" + (crossedNow ? " just-brightened" : "") }, [
+      el("div", { class: "small-note", text: "Brightness: " + brightness + "% — earned by taking in gift and cost together, never purchasable." }),
+      el("div", { class: "brightness-bar" }, [el("div", { class: "brightness-fill", style: "width:" + brightness + "%" })])
+    ]);
+    if (crossedNow) {
+      barWrap.appendChild(el("div", { class: "brightness-burst", text:
+        "✦ Your sky just crossed " + topReached + "% — the light is holding." }));
+      STORE.setBrightnessMilestone(topReached);
+      if (window.APP_TOAST) window.APP_TOAST("✦ Sky brightness " + topReached + "%");
+    }
+    root.appendChild(barWrap);
 
     root.appendChild(el("div", { class: "small-note", text: stars.length + " star" + (stars.length === 1 ? "" : "s") + " in this galaxy (2–3 max for this MVP)." }));
 

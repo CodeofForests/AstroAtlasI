@@ -21,7 +21,9 @@ const STORE = (function () {
         startedAtISO: null,   // for the inception chart (Week 3 solo)
         completedDays: [],     // [1..21]
         choices: {},           // { [dayNum]: 'lean' | 'counter' } — the daily fork
-        observationPersonName: null
+        observationPersonName: null,
+        seenUnlocks: [],       // reveal keys ("gift:Mars" / "cost:Venus") already shown with their unlock animation
+        brightnessMilestone: 0 // highest Galaxy brightness threshold (25/50/75/100) already celebrated
       },
       deleted: false
     };
@@ -94,6 +96,21 @@ const STORE = (function () {
   function currentDay() {
     return Math.min(state.cycle.completedDays.length + 1, 21);
   }
+  // Remember that a set of reveal keys has now been shown with its
+  // "just unlocked" moment, so later renders of the chart tiles stay calm.
+  function markUnlocksSeen(keys) {
+    return update((s) => {
+      if (!s.cycle.seenUnlocks) s.cycle.seenUnlocks = [];
+      keys.forEach((k) => {
+        if (s.cycle.seenUnlocks.indexOf(k) === -1) s.cycle.seenUnlocks.push(k);
+      });
+    });
+  }
+  function setBrightnessMilestone(n) {
+    return update((s) => {
+      if (!(s.cycle.brightnessMilestone >= n)) s.cycle.brightnessMilestone = n;
+    });
+  }
   function recordChoice(dayNum, choice) {
     return update((s) => {
       if (!s.cycle.choices) s.cycle.choices = {};
@@ -110,6 +127,8 @@ const STORE = (function () {
       s.cycle.number += 1;
       s.cycle.completedDays = [];
       s.cycle.choices = {};
+      s.cycle.seenUnlocks = [];
+      s.cycle.brightnessMilestone = 0;
       s.cycle.startedAtISO = new Date().toISOString();
       if (mode === "new-circle") s.others = [];
     });
@@ -138,6 +157,8 @@ const STORE = (function () {
     withdraw: withdraw,
     completeDay: completeDay,
     currentDay: currentDay,
+    markUnlocksSeen: markUnlocksSeen,
+    setBrightnessMilestone: setBrightnessMilestone,
     recordChoice: recordChoice,
     repeatCycle: repeatCycle,
     deleteEverything: deleteEverything
