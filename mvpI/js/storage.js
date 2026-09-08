@@ -161,6 +161,29 @@ const STORE = (function () {
     });
   }
 
+  // Wipe this journey's progress and start again at Day 1. The birth chart
+  // (s.me) and any added people stay. Same cycle number — this is "redo from
+  // the start", not "move on to the next cycle" (that's repeatCycle, which
+  // bumps the number). This cycle's thought log and horary question are
+  // cleared too, so Week 1 really does start empty.
+  function restartJourney() {
+    for (var d = 1; d <= 21; d++) {
+      localStorage.removeItem("aa_practice_day_" + d);
+      localStorage.removeItem("aa_practice_note_day_" + d);
+      localStorage.removeItem("aa_body_day_" + d);
+    }
+    return update((s) => {
+      s.cycle.completedDays = [];
+      s.cycle.choices = {};
+      s.cycle.seenUnlocks = [];
+      s.cycle.brightnessMilestone = 0;
+      s.cycle.observationPersonName = null;
+      s.cycle.startedAtISO = new Date().toISOString();
+      s.thoughts = [];
+      s.horaryAsked = {};
+    });
+  }
+
   function deleteEverything() {
     localStorage.removeItem(KEY);
     localStorage.removeItem("aa_journey_intro_dismissed");
@@ -192,6 +215,7 @@ const STORE = (function () {
     deleteThought: deleteThought,
     recordHorary: recordHorary,
     repeatCycle: repeatCycle,
+    restartJourney: restartJourney,
     deleteEverything: deleteEverything
   };
 })();

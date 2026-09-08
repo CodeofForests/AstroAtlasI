@@ -643,6 +643,37 @@
     render();
   });
 
+  // ---- Motion preference (P0 calm pass) ----
+  // "gentle" (default) = the reveal / celebration layer stays quiet; "lively"
+  // restores it. Read by CSS via <html data-motion>. prefers-reduced-motion
+  // still overrides both.
+  (function initMotionPref() {
+    let pref = "gentle";
+    try { pref = localStorage.getItem("aa_motion_pref") || "gentle"; } catch (e) {}
+    if (pref !== "gentle" && pref !== "lively") pref = "gentle";
+    document.documentElement.dataset.motion = pref;
+
+    const row = document.getElementById("motion-toggle");
+    if (!row) return;
+    const btns = row.querySelectorAll("button");
+    function paint() {
+      const cur = document.documentElement.dataset.motion;
+      btns.forEach((b) => {
+        const on = b.dataset.motion === cur;
+        b.classList.toggle("active", on);
+        b.setAttribute("aria-pressed", on ? "true" : "false");
+      });
+    }
+    btns.forEach((b) => {
+      b.addEventListener("click", () => {
+        document.documentElement.dataset.motion = b.dataset.motion;
+        try { localStorage.setItem("aa_motion_pref", b.dataset.motion); } catch (e) {}
+        paint();
+      });
+    });
+    paint();
+  })();
+
   render();
   showTab(location.hash ? location.hash.replace("#", "") : "home");
 })();

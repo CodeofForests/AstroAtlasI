@@ -15,8 +15,9 @@
       lines.push("=== " + res.case.label + " ===");
       lines.push("UTC: " + res.utcDate.toISOString() + "  offset=" + res.offsetMinutes + "min (expect " + res.case.expectOffsetMinutes + ") -> " + (res.offsetOk ? "OK" : "FAIL"));
       lines.push("MC=" + res.mc.toFixed(2) + " (" + ASTRO.signOf(res.mc) + ")  ASC=" + res.asc.toFixed(2) + " (" + ASTRO.signOf(res.asc) + ")");
-      ["Sun","Moon","Mercury","Venus","Mars","Jupiter","Saturn","Uranus","Neptune","Pluto","Chiron","NorthNode"].forEach(b=>{
+      ["Sun","Moon","Mercury","Venus","Mars","Jupiter","Saturn","Uranus","Neptune","Pluto","NorthNode"].forEach(b=>{
         const p = res.positions[b];
+        if (!p) return;
         lines.push("  " + b.padEnd(10) + p.lon.toFixed(2) + "  " + ASTRO.signOf(p.lon) + " " + ASTRO.degInSign(p.lon).toFixed(2) + "°" + (p.approximate ? " (approx)" : ""));
       });
       lines.push("");

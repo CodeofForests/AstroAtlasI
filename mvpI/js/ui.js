@@ -100,10 +100,12 @@ const UI = (function () {
     [
       ["We calculate your chart like an astronomer",
        "From the date, time and place you gave — where the Sun, Moon and planets actually were the minute you were born."],
-      ["It names what you're good at — and what it costs",
-       "Every strength in a chart carries a price. We always show the two together, never a separate list of flaws."],
+      ["It shows your strengths — and the shadow each one casts",
+       "Every strength has a flip side. We always show the two together, side by side — never a separate list of flaws."],
       ["A 21-day journey is there if you want it",
-       "It turns one strength into a small daily practice — about five minutes a day for three weeks, and missing a day never resets anything. Entirely optional."]
+       "Your chart is your life map: planets carrying energy until you use it. We're here to experience, create, share love. You always choose. These 21 days activate what's yours."],
+      ["A weekly extra: a strong thought",
+       "When a question won't leave you alone, note the moment it struck. At the end of the week the app draws the sky for that exact moment and reads it back in plain words — an old practice called horary. Never a yes or a no. One a week."]
     ].forEach(function (row) {
       card.appendChild(
         el("div", { class: "hiw-row" }, [
@@ -145,7 +147,7 @@ const UI = (function () {
       chartCard(s.me.name || "You", chart, hs, true, () => { location.hash = "#birthdata"; })
     );
 
-    root.appendChild(el("h2", { text: "Viewing my chart" }));
+    root.appendChild(el("h2", { text: "Your strengths, and their shadows" }));
     root.appendChild(strengthsWeaknessesCard(chart));
 
     // The journey is an optional next step, not the headline. Kept as a
@@ -156,10 +158,30 @@ const UI = (function () {
     if (started) {
       offer.appendChild(el("h4", { text: "Your 21-day journey" }));
       offer.appendChild(el("p", { class: "offer-text", text:
-        "Day " + STORE.currentDay() + " of 21 — pick up where you left off." }));
+        "Day " + STORE.currentDay() + ". Pick up where you left off — nothing was lost." }));
       const b = el("button", { class: "offer-btn", type: "button", text: "Continue the journey →" });
       b.addEventListener("click", () => location.hash = "#cycle");
       offer.appendChild(b);
+
+      // Start the 21 days again from Day 1. Keeps this chart; clears only the
+      // journey (completed days, practice + body notes, this cycle's thought
+      // log and horary question).
+      const restart = el("button", { class: "offer-btn offer-btn-quiet", type: "button", text: "Start over from Day 1" });
+      restart.style.marginTop = "8px";
+      restart.addEventListener("click", () => {
+        const ok = window.confirm(
+          "Start the 21 days over from Day 1?\n\n" +
+          "Your birth chart stays. This clears your completed days, your practice and body notes, " +
+          "and this journey's strong-thoughts log. It can't be undone."
+        );
+        if (!ok) return;
+        STORE.restartJourney();
+        try { localStorage.setItem("aa_journey_intro_dismissed", "1"); } catch (e) {}
+        if (window.APP_TOAST) window.APP_TOAST("Back to Day 1");
+        location.hash = "#cycle";
+        renderCycleTab();
+      });
+      offer.appendChild(restart);
     } else {
       offer.appendChild(el("h4", { text: "One optional next step" }));
       offer.appendChild(el("p", { class: "offer-text", text:
@@ -195,7 +217,7 @@ const UI = (function () {
       );
     }
     wrap.appendChild(
-      el("p", { class: "small-note", text: "All seven strengths are here from the start. Tap a card to see the cost of that same strength — never a separate list of flaws. The cost half unlocks as your journey reaches Week 2." })
+      el("p", { class: "small-note", text: "All seven strengths are here from the start. Tap one to see the shadow it casts — the same trait, seen from its cost. The shadow half opens as your journey reaches Week 2." })
     );
 
     const s = STORE.get();
@@ -488,7 +510,8 @@ const UI = (function () {
     wrap.appendChild(wheelCaption);
 
     const table = el("div", { class: "positions-table detail-panel" });
-    ASTRO.BODY_ORDER.filter((b) => b !== "SouthNode").forEach((body) => {
+    const shownBodies = ASTRO.BODY_ORDER.filter((b) => b !== "SouthNode" && chart.positions[b]);
+    shownBodies.forEach((body) => {
       const p = chart.positions[body];
       if (!p) return;
       table.appendChild(
@@ -511,7 +534,7 @@ const UI = (function () {
     }
 
     wrap.appendChild(detailToggleGroup([
-      { label: "Exact degrees (" + Object.keys(chart.positions).length + ")", panel: table },
+      { label: "Exact degrees (" + shownBodies.length + ")", panel: table },
       { label: "Aspects (" + (chart.aspects ? chart.aspects.length : 0) + ")", panel: aspWrap }
     ]));
 
@@ -560,6 +583,8 @@ const UI = (function () {
   let reviewMode = false;
   let previewReport = false; // browsing the shape of the Day-21 report before finishing
   let reviewAll = false;     // the one-page "all 21 days" review
+  let journeyOverview = false; // P0: the day screen shows only today; map/horary/log live here
+  let practiceNoteOpenDay = null; // P0: which day's "Note how it felt" fold is open (survives re-render)
   function clampViewDay(maxDay) {
     if (viewDay == null || viewDay > maxDay) viewDay = maxDay;
     if (viewDay < 1) viewDay = 1;
@@ -665,13 +690,26 @@ const UI = (function () {
           const p = chart.positions[body];
           theme = body + (p ? " in " + ASTRO.signOf(p.lon) : "") + (w === 1 ? " — the gift" : " — the cost");
         }
-        let practice = null;
-        try { practice = localStorage.getItem("aa_practice_day_" + d); } catch (e) {}
+        let practiceKey = null;
+        try { practiceKey = localStorage.getItem("aa_practice_day_" + d); } catch (e) {}
+        let practiceLabel = null;
+        if (practiceKey === "custom") practiceLabel = "your own";
+        else if (practiceKey) {
+          const pp = CONTENT.PRACTICES.find((x) => x.key === practiceKey);
+          practiceLabel = pp ? pp.label : practiceKey;
+        }
+        let bodyNote = {};
+        try {
+          const raw = localStorage.getItem("aa_body_day_" + d);
+          bodyNote = raw ? JSON.parse(raw) : {};
+        } catch (e) {}
+        const bodyBit = bodyNote.quality && bodyNote.quality !== "other" ? " · felt " + bodyNote.quality : "";
         const done = s.cycle.completedDays.indexOf(d) !== -1;
         const row = el("button", { type: "button", class: "review-row" }, [
           el("span", { class: "review-row-day", text: "Day " + d }),
           el("span", { class: "review-row-theme", text: theme }),
-          el("span", { class: "review-row-meta", text: (done ? "done" : "not done") + (practice ? " · " + practice : "") })
+          el("span", { class: "review-row-meta", text:
+            (done ? "done" : "not done") + (practiceLabel ? " · " + practiceLabel : "") + bodyBit })
         ]);
         row.addEventListener("click", () => {
           reviewAll = false; reviewMode = true; viewDay = d; renderCycleTab();
@@ -707,6 +745,56 @@ const UI = (function () {
     return ["", "1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th", "10th", "11th", "12th"][n] || (n + "th");
   }
 
+  // Plain-language stand-ins for the horary reveal, so it reads like a story
+  // and not a textbook. Each house becomes an everyday area of life; each
+  // planet becomes "what it's about". The chart wheel above still shows the
+  // real signs and degrees for anyone who wants them.
+  const HOUSE_PLAIN = {
+    1: "you, and how this goes for you",
+    2: "money and the things you own",
+    3: "talking, messages, and short trips",
+    4: "home and family",
+    5: "fun, romance, children, and making things",
+    6: "everyday work and health",
+    7: "the other person — a partner, or someone you're up against",
+    8: "shared money and big changes",
+    9: "learning, travel, and big questions",
+    10: "your work out in the world, and your name",
+    11: "friends, groups, and things you hope for",
+    12: "quiet, hidden, behind-the-scenes things"
+  };
+  const PLANET_PLAIN = {
+    Sun: "being seen, and whoever's in charge",
+    Moon: "feelings and day-to-day life",
+    Mercury: "talking, messages, and paperwork",
+    Venus: "people you like, money, and nice things",
+    Mars: "action, a push, or a bit of a fight",
+    Jupiter: "luck, growth, and someone helpful",
+    Saturn: "rules, waiting, and hard work"
+  };
+  function housePlain(h) { return HOUSE_PLAIN[h] || ("area " + h + " of life"); }
+  function planetPlain(p) { return PLANET_PLAIN[p] || p; }
+
+  // Essential dignity, in the same plain voice — "how much of a say this
+  // star has where it's standing".
+  const DIGNITY_PHRASE = {
+    domicile: "It's on home ground there — settled, with a real say in how things go.",
+    exaltation: "It's a guest of honour there — well thought of, and given room to act.",
+    detriment: "It's far from home there — working against the grain.",
+    fall: "It's on the back foot there — not much underfoot to draw on.",
+    peregrine: "It's just passing through — no special standing either way."
+  };
+  function dignityPhrase(d) { return d && DIGNITY_PHRASE[d.status] ? DIGNITY_PHRASE[d.status] : null; }
+
+  // Days -> a rough, friendly stretch of time.
+  function phraseDuration(days) {
+    if (days == null || !isFinite(days) || days < 0) return null;
+    if (days < 1 / 24) return "very soon";
+    if (days < 1) { const h = Math.max(1, Math.round(days * 24)); return "in about " + h + " hour" + (h === 1 ? "" : "s"); }
+    if (days < 14) { const d = Math.round(days); return "in about " + d + " day" + (d === 1 ? "" : "s"); }
+    return "further off — a few weeks away";
+  }
+
   function thoughtLogCard(s) {
     const wrap = el("div", { class: "card thought-log" });
     const curWeek = weekOf(Math.min(STORE.currentDay(), 21));
@@ -717,7 +805,7 @@ const UI = (function () {
 
     const list = thoughtsFor(s, curWeek).slice().sort((a, b) => (a.atISO < b.atISO ? -1 : 1));
     if (list.length === 0) {
-      wrap.appendChild(el("div", { class: "empty-hint", text: "Nothing logged yet this week." }));
+      wrap.appendChild(el("div", { class: "empty-hint", text: "Nothing here yet — and that's fine. Log a moment only if one comes." }));
     } else {
       list.forEach((t) => {
         const when = new Date(t.atISO);
@@ -827,7 +915,9 @@ const UI = (function () {
   function horaryAskForm(s, w, key) {
     const box = el("div");
     box.appendChild(el("p", { class: "small-note", text:
-      "Week " + w + " is complete. Pick one moment you logged and the matter it concerns — the chart is cast for that exact moment and place, and read descriptively (Goldstein-Jacobson): what the chart holds, never a yes or no." }));
+      "Week " + w + " is done. Pick one moment you wrote down and what it was about. We'll draw the sky " +
+      "exactly as it looked at that minute and read it back to you in plain words — what the picture holds, " +
+      "never a yes or a no." }));
 
     box.appendChild(el("div", { class: "horary-label", text: "Which moment" }));
     const tGrid = el("div", { class: "horary-picks" });
@@ -875,7 +965,7 @@ const UI = (function () {
       renderCycleTab();
     });
     box.appendChild(cast);
-    box.appendChild(el("p", { class: "small-note", text: "One question per week — it can't be re-cast once done." }));
+    box.appendChild(el("p", { class: "small-note", text: "One a week. Once it's drawn, it stays as it is." }));
     return box;
   }
 
@@ -898,14 +988,15 @@ const UI = (function () {
 
     if (asked.question) box.appendChild(el("p", { class: "horary-question", text: "“" + asked.question + "”" }));
     box.appendChild(el("p", { class: "small-note", text:
-      "Cast for " + when.toLocaleString([], { dateStyle: "medium", timeStyle: "short" }) +
-      (thought.place && thought.place.label ? " · " + thought.place.label : "") +
-      " — the moment the thought struck. Matter: " + topic.label + " (" + ordinalWord(topic.house) + " house)." }));
+      "This is a picture of the sky at the very minute that thought came to you — " +
+      when.toLocaleString([], { dateStyle: "medium", timeStyle: "short" }) +
+      (thought.place && thought.place.label ? ", " + thought.place.label : "") +
+      ". You wanted to know about: " + topic.label.toLowerCase() + "." }));
 
     let j;
     try { j = HORARY.judge(thought, topic.house); }
     catch (e) {
-      box.appendChild(el("p", { class: "form-error", text: "Could not cast this chart from the logged moment." }));
+      box.appendChild(el("p", { class: "form-error", text: "Could not draw this picture from the moment you saved." }));
       return box;
     }
 
@@ -915,60 +1006,86 @@ const UI = (function () {
 
     if (!j.radical.ok) {
       const r = el("div", { class: "notice" });
-      r.appendChild(el("div", { class: "horary-label", text: "Before reading — considerations" }));
+      r.appendChild(el("div", { class: "horary-label", text: "Worth noticing first" }));
       j.radical.notes.forEach((n) => r.appendChild(el("p", { class: "small-note", text: "• " + n })));
       box.appendChild(r);
     }
 
     const f = el("div", { class: "horary-factors" });
 
-    f.appendChild(factorBlock("You (the querent)", [
-      "Ascendant in " + j.querent.ascSign + " — you are shown by " +
-        (j.querent.ruler ? j.querent.ruler.body : "its ruler") + ".",
-      j.querent.ruler ? (j.querent.ruler.body + " is at " + j.querent.ruler.at + ", in the " +
-        ordinalWord(j.querent.ruler.house) + " house" +
-        (j.querent.ruler.flags.length ? " — " + j.querent.ruler.flags.join("; ") : "") + ".") : null,
-      "The Moon (also you, and the flow of the matter) is at " + j.querent.moon.at +
-        ", in the " + ordinalWord(j.querent.moon.house) + " house."
+    const youRuler = j.querent.ruler ? j.querent.ruler.body : null;
+    const youDig = j.querent.ruler ? dignityPhrase(j.querent.ruler.dignity) : null;
+    f.appendChild(factorBlock("The star that means you", [
+      youRuler
+        ? "In this picture, you are shown by " + youRuler + " — the part about " + planetPlain(youRuler) + "."
+        : "In this picture, you are shown by the star that rules the edge of the sky where you sit.",
+      j.querent.ruler ? (youRuler + " is sitting in the part of the sky about " +
+        housePlain(j.querent.ruler.house) +
+        (j.querent.ruler.flags.length ? ". Right now it's " + j.querent.ruler.flags.join("; and it's ") : "") + ".") : null,
+      youDig,
+      "The Moon stands for you too — and for the way the whole thing is moving. It's in the part about " +
+        housePlain(j.querent.moon.house) + "."
     ]));
 
     let moonLine;
     if (j.querent.moon.next.voidOfCourse) {
-      moonLine = "The Moon makes no more aspects before it leaves its sign — 'void of course', traditionally 'the matter drifts; little may come of it either way'.";
+      moonLine = "The Moon isn't going to bump into any other star before it moves along" +
+        (j.querent.moon.next.intoSign ? " into " + j.querent.moon.next.intoSign : "") +
+        ". Often that means: not much changes either way — the thing kind of drifts.";
     } else {
-      const nd = j.querent.moon.next.inDays;
-      moonLine = "The Moon's next contact is a " + j.querent.moon.next.aspect + " to " + j.querent.moon.next.to +
-        " (about " + nd.toFixed(1) + " day" + (nd < 1.5 ? "" : "s") + " on) — this is what develops next.";
+      const when = phraseDuration(j.querent.moon.next.inDays) || "soon";
+      moonLine = "The next star the Moon reaches is " + j.querent.moon.next.to + ", " + when + ". " +
+        "So what comes into this next is about " + planetPlain(j.querent.moon.next.to) + ".";
     }
-    f.appendChild(factorBlock("What moves next", [moonLine]));
+    f.appendChild(factorBlock("What happens next", [moonLine]));
 
-    f.appendChild(factorBlock("The matter — " + topic.label.toLowerCase(), [
-      "The " + ordinalWord(j.quesited.house) + " house has " + j.quesited.cuspSign +
-        " on the cusp — the matter is shown by " + (j.quesited.ruler ? j.quesited.ruler.body : "its ruler") + ".",
-      j.quesited.ruler ? (j.quesited.ruler.body + " is at " + j.quesited.ruler.at + ", in the " +
-        ordinalWord(j.quesited.ruler.house) + " house" +
-        (j.quesited.ruler.flags.length ? " — " + j.quesited.ruler.flags.join("; ") : "") + ".") : null,
-      j.quesited.occupants.length ? ("In the house itself: " + j.quesited.occupants.join(", ") + ".") : null
+    const itRuler = j.quesited.ruler ? j.quesited.ruler.body : null;
+    const itDig = j.quesited.ruler ? dignityPhrase(j.quesited.ruler.dignity) : null;
+    f.appendChild(factorBlock("The star that means what you asked about", [
+      itRuler
+        ? "What you asked about is shown by " + itRuler + " — the part about " + planetPlain(itRuler) + "."
+        : "What you asked about is shown by the star that rules that part of the sky.",
+      j.quesited.ruler ? (itRuler + " is sitting in the part of the sky about " +
+        housePlain(j.quesited.ruler.house) +
+        (j.quesited.ruler.flags.length ? ". Right now it's " + j.quesited.ruler.flags.join("; and it's ") : "") + ".") : null,
+      itDig,
+      j.quesited.occupants.length
+        ? ("Sitting in the part about " + housePlain(j.quesited.house) + " itself: " + j.quesited.occupants.join(", ") + ".")
+        : null
     ]));
 
     const conn = [];
     if (j.connection.sameRuler) {
-      conn.push("You and the matter share the same ruler (" + j.connection.sameRuler + ") — the two are already bound together.");
+      conn.push("Here's the big thing: the very same star (" + j.connection.sameRuler +
+        ") stands for both you and what you asked about. You two are already holding hands — tied tightly together.");
     } else if (j.connection.between) {
       const b = j.connection.between;
-      conn.push("Your ruler and the matter's ruler are in a " + b.aspect + " (orb " + b.orb.toFixed(1) + "°), " +
-        (b.applying ? "applying — moving toward each other." : b.separating ? "separating — the contact is already past." : "exact right now."));
+      if (b.applying) {
+        const meet = phraseDuration(b.perfectsInDays);
+        conn.push("Your star and the other star are moving toward each other — the story is still coming together" +
+          (meet ? ", and going by their speeds they'd line up " + meet : "") + ".");
+      } else if (b.separating) {
+        conn.push("Your star and the other star are moving apart. The main moment may have already happened.");
+      } else {
+        conn.push("Your star and the other star are touching right now.");
+      }
     } else {
-      conn.push("Your ruler and the matter's ruler make no direct aspect.");
+      conn.push("Your star and the other star aren't reaching each other directly.");
     }
     if (j.connection.translation) {
-      conn.push(j.connection.translation.by + " passes between them — 'translation of light': a third person or circumstance carrying the matter along.");
+      conn.push("A quicker star (" + j.connection.translation.by + ") is carrying the light from one to the other — " +
+        "often a go-between: a person, a message, or a turn of events that passes the matter along.");
     }
-    f.appendChild(factorBlock("The connection", conn));
+    if (j.connection.collection) {
+      conn.push("A slower star (" + j.connection.collection.by + ") is gathering up both threads at once — " +
+        "often one person or thing that pulls the separate pieces together through itself.");
+    }
+    f.appendChild(factorBlock("How the two are getting on", conn));
 
     box.appendChild(f);
     box.appendChild(el("p", { class: "small-note", text:
-      "This is what the chart of that moment holds — the pieces a horary reading weighs. It is not a yes or a no. Sit with which testimony rings true." }));
+      "None of this is a yes or a no. It's just a picture of the moment, laid out in the open, so you can " +
+      "look at it and see which part feels true." }));
     return box;
   }
 
@@ -1048,13 +1165,22 @@ const UI = (function () {
     const box = el("details", { class: "glossary" });
     box.appendChild(el("summary", { text: "New here? What these words mean" }));
     CONTENT.GLOSSARY.forEach((g) => {
-      box.appendChild(
-        el("div", { class: "gloss-item" }, [
-          el("strong", { class: "gloss-term", text: g.term }),
-          el("p", { class: "gloss-plain", text: g.plain }),
-          el("p", { class: "gloss-real", text: g.real })
-        ])
-      );
+      const item = el("div", { class: "gloss-item" }, [
+        el("strong", { class: "gloss-term", text: g.term }),
+        el("p", { class: "gloss-plain", text: g.plain })
+      ]);
+      if (g.real) item.appendChild(el("p", { class: "gloss-real", text: g.real }));
+      if (g.list && g.list.length) {
+        const listBox = el("div", { class: "gloss-list" });
+        g.list.forEach((row) => {
+          listBox.appendChild(el("p", { class: "gloss-list-row" }, [
+            el("span", { class: "gloss-list-name", text: row.name }),
+            el("span", { class: "gloss-list-gloss", text: " — " + row.gloss })
+          ]));
+        });
+        item.appendChild(listBox);
+      }
+      box.appendChild(item);
     });
     return box;
   }
@@ -1091,12 +1217,41 @@ const UI = (function () {
     });
     frag.appendChild(weeks);
 
+    const spirit = el("div", { class: "card practice-spirit-card" }, [
+      el("h4", { text: "The practice behind all of it" }),
+      el("blockquote", { class: "day-quote" }, [
+        el("p", { class: "day-quote-text", text: "“" + CONTENT.PRACTICE_SPIRIT.quote + "”" }),
+        el("cite", { class: "day-quote-who", text: "— " + CONTENT.PRACTICE_SPIRIT.who })
+      ]),
+      el("p", { class: "day-text", text:
+        "Nothing to believe, nothing to get right. Each day you choose one small way to practise that " +
+        "openness — through the mind, through speech, or through the body — and then notice what your " +
+        "body did while you did it. The chart just points at where you tend to close." })
+    ]);
+    frag.appendChild(spirit);
+
     frag.appendChild(
       el("div", { class: "card" }, [
         el("h4", { text: "What a day asks of you" }),
         el("p", { class: "day-text", text:
-          "A short read, a line to sit with, one small practice, and a note on how it landed in the body. " +
-          "About five minutes. Miss a day and nothing resets — come back whenever." })
+          "A short read, a line to sit with, and one practice you choose and carry through the day — " +
+          "then a quick note on what your body did. About five minutes. Miss a day and nothing resets — " +
+          "come back whenever." })
+      ])
+    );
+
+    frag.appendChild(
+      el("div", { class: "card" }, [
+        el("h4", { text: "Once a week: a strong thought" }),
+        el("p", { class: "day-text", text:
+          "Some weeks a thought keeps tugging at you — a worry, a question, a decision you can't put down. " +
+          "When one strikes, write down the moment it hit: the day, the time, and where you were. At the " +
+          "end of that week — once all seven days are done — you can pick one of those moments, and the app " +
+          "draws the sky exactly as it looked then and reads it back to you in plain words." }),
+        el("p", { class: "day-text", text:
+          "It's an old practice called horary. It never gives a yes or a no — it just lays the moment out " +
+          "in the open so you can see its shape more clearly. One a week, and only if you have a thought " +
+          "worth asking about." })
       ])
     );
 
@@ -1123,11 +1278,15 @@ const UI = (function () {
   // up, the string of 21 choices only you produced, and the North Node as
   // "who you're growing toward". Replaces the old bare "go repeat it" notice.
   // ---- the somatic layer ----
-  // Each practice is framed as a way to feel the day's strength/cost in the
-  // body, on the principle that gift and cost often share one sensation a
-  // notch apart, and that the sensation is weather — it comes, it goes, it
-  // isn't the self. One quality + one place per day, both optional, stored
-  // one JSON key per day (matching the practice-key pattern).
+  // The body note is the earliest, pre-verbal sign the day's tendency fired
+  // under the practice — weather, not identity: it comes, it goes, it isn't
+  // the self. One quality + one place per day, both optional, one JSON key
+  // per day (aa_body_day_N). The input UI now lives inside practicePicker
+  // (it only makes sense once a practice is chosen); these two helpers and
+  // bodyPatternCard below are still shared. The old standalone "How the body
+  // feels" card is gone, and the "in the body" cue is now keyed to the
+  // chosen practice (CONTENT.practiceBodyCue) rather than the day's planet
+  // (CONTENT.bodyCueForDay, still exported, no longer shown) — see data.js.
   function readBodyNote(day) {
     try {
       const raw = localStorage.getItem("aa_body_day_" + day);
@@ -1138,108 +1297,40 @@ const UI = (function () {
     try { localStorage.setItem("aa_body_day_" + day, JSON.stringify(note)); } catch (e) {}
   }
 
-  function bodyCueCard(day, week) {
-    const cue = CONTENT.bodyCueForDay(day, week);
-    if (!cue) return document.createComment("no body cue");
-    return el("div", { class: "body-cue" }, [
-      el("span", { class: "body-cue-label", text: "In the body" }),
-      el("p", { class: "body-cue-text", text: cue })
-    ]);
-  }
-
-  function bodyLog(day, week) {
-    const wrap = el("div", { class: "card body-log" });
-    wrap.appendChild(el("h4", { text: "How the body feels" }));
-    wrap.appendChild(el("p", { class: "small-note", text:
-      "Optional. A snapshot, not a verdict — and it will have changed by tomorrow." }));
-
-    // Where this day's planet tends to be felt — context for the log below.
-    if (typeof week !== "undefined") wrap.appendChild(bodyCueCard(day, week));
-
-    // "What has this got to do with my body?" — the answer, in place.
-    const why = el("details", { class: "body-why" });
-    why.appendChild(el("summary", { text: "Why notice the body?" }));
-    why.appendChild(el("p", { class: "body-why-text", text: CONTENT.BODY_RATIONALE.plain }));
-    wrap.appendChild(why);
-
-    // field: "quality" | "place". A free-text "something else" always sits
-    // alongside the presets — the six words are a starting point, not the
-    // whole range of what a body can feel.
-    function row(items, field, placeholder) {
-      const grid = el("div", { class: "practice-grid" });
-      const note = readBodyNote(day);
-      items.forEach((it) => {
-        const chip = el("button", {
-          type: "button",
-          class: "practice-chip" + (note[field] === it ? " active" : ""),
-          text: it
-        });
-        chip.addEventListener("click", () => {
-          const n = readBodyNote(day);
-          if (n[field] === it) delete n[field]; else n[field] = it;
-          writeBodyNote(day, n);
-          renderCycleTab();
-        });
-        grid.appendChild(chip);
-      });
-      const otherChip = el("button", {
-        type: "button",
-        class: "practice-chip" + (note[field] === "other" ? " active" : ""),
-        text: "something else…"
-      });
-      otherChip.addEventListener("click", () => {
-        const n = readBodyNote(day);
-        if (n[field] === "other") { delete n[field]; delete n[field + "Other"]; }
-        else n[field] = "other";
-        writeBodyNote(day, n);
-        renderCycleTab();
-      });
-      grid.appendChild(otherChip);
-
-      const box = el("div");
-      box.appendChild(grid);
-      if (note[field] === "other") {
-        const input = el("input", { type: "text", class: "body-other", placeholder: placeholder });
-        try { input.value = note[field + "Other"] || ""; } catch (e) {}
-        input.addEventListener("input", () => {
-          const n = readBodyNote(day);
-          n[field + "Other"] = input.value;
-          writeBodyNote(day, n);
-        });
-        box.appendChild(input);
-      }
-      return box;
-    }
-
-    wrap.appendChild(el("p", { class: "body-log-sub", text: "What it feels like" }));
-    wrap.appendChild(row(CONTENT.BODY_QUALITIES, "quality", "in your own words"));
-    wrap.appendChild(el("p", { class: "body-log-sub", text: "Where in the body" }));
-    wrap.appendChild(row(CONTENT.BODY_PLACES, "place", "somewhere else — name it"));
-    return wrap;
-  }
-
-  // Day-21: what the body reported across the three weeks. The contrast
-  // between phases is the point — same person, different weather.
+  // Day-21: what you practised and what the body reported, per phase, side by
+  // side — so the loop (choose a door → the body answers) is legible in
+  // hindsight. The contrast between phases is the point: same person,
+  // different weather.
   function bodyPatternCard() {
     const phases = [
       { key: "gift", name: "gift", days: [1, 2, 3, 4, 5, 6, 7] },
       { key: "cost", name: "cost", days: [8, 9, 10, 11, 12, 13, 14] },
       { key: "others", name: "Week 3", days: [15, 16, 17, 18, 19, 20, 21] }
     ];
+    const catLabel = {};
+    (CONTENT.PRACTICE_CATEGORIES || []).forEach((c) => { catLabel[c.key] = c.label; });
     let totalLogged = 0;
     const rows = phases.map((ph) => {
-      const q = {}, p = {};
+      const q = {}, p = {}, cat = {};
       ph.days.forEach((d) => {
         const n = readBodyNote(d);
         if (n.quality) { q[n.quality] = (q[n.quality] || 0) + 1; totalLogged++; }
         if (n.place) { p[n.place] = (p[n.place] || 0) + 1; }
+        let pk = null;
+        try { pk = localStorage.getItem("aa_practice_day_" + d); } catch (e) {}
+        if (pk && pk !== "custom") {
+          const pp = CONTENT.PRACTICES.find((x) => x.key === pk);
+          if (pp) cat[pp.cat] = (cat[pp.cat] || 0) + 1;
+        } else if (pk === "custom") {
+          cat.custom = (cat.custom || 0) + 1;
+        }
       });
       const top = (o) => Object.keys(o).sort((a, b) => o[b] - o[a])[0] || null;
-      return { name: ph.name, quality: top(q), place: top(p) };
+      return { name: ph.name, quality: top(q), place: top(p), cat: top(cat) };
     });
 
     const card = el("div", { class: "card" });
-    card.appendChild(el("h4", { text: "What your body noticed" }));
+    card.appendChild(el("h4", { text: "What you practised, what your body did" }));
 
     if (totalLogged < 3) {
       card.appendChild(el("p", { class: "day-text", text:
@@ -1250,12 +1341,18 @@ const UI = (function () {
 
     const qWord = (q) => q === "other" ? "something you named yourself" : "“" + q + "”";
     const pWord = (p) => p === "other" ? "somewhere you named yourself" : "around the " + p;
+    const cWord = (c) => c === "custom" ? "your own practices" : (catLabel[c] || c) + " practices";
     rows.forEach((r) => {
-      const txt = (!r.quality && !r.place)
-        ? "On your " + r.name + " days — nothing logged."
-        : "On your " + r.name + " days, most often " +
-          (r.quality ? qWord(r.quality) : "something") +
-          (r.place ? ", " + pWord(r.place) : "") + ".";
+      const feltBit = (r.quality || r.place)
+        ? (r.quality
+            ? "the body most often felt " + qWord(r.quality) + (r.place ? ", " + pWord(r.place) : "")
+            : "the body most often spoke up " + pWord(r.place))
+        : null;
+      let txt;
+      if (r.cat && feltBit) txt = "On your " + r.name + " days you leaned on " + cWord(r.cat) + ", and " + feltBit + ".";
+      else if (r.cat) txt = "On your " + r.name + " days you leaned on " + cWord(r.cat) + " — no body note.";
+      else if (feltBit) txt = "On your " + r.name + " days, " + feltBit + ".";
+      else txt = "On your " + r.name + " days — nothing logged.";
       card.appendChild(el("p", { class: "day-text body-pattern-line", text: txt }));
     });
     card.appendChild(el("p", { class: "day-text", text:
@@ -1422,12 +1519,6 @@ const UI = (function () {
       return;
     }
 
-    root.appendChild(el("h2", { text: "21-Day Journey — Journey " + s.cycle.number }));
-    root.appendChild(
-      el("div", { class: "progress-note", text: s.cycle.completedDays.length + " of 21 days complete. Missing a day never resets your journey — come back whenever." })
-    );
-    root.appendChild(glossaryCard());
-
     const complete = s.cycle.completedDays.length >= 21;
     if (!complete) reviewMode = false;
 
@@ -1454,6 +1545,8 @@ const UI = (function () {
     }
 
     if (complete && !reviewMode) {
+      root.appendChild(el("h2", { text: "Your 21 days" }));
+      root.appendChild(glossaryCard());
       root.appendChild(journeyMap(s, hs, today));
       root.appendChild(horarySection(s));
       root.appendChild(thoughtLogCard(s));
@@ -1471,16 +1564,39 @@ const UI = (function () {
       return;
     }
 
-    // Journey in progress: the whole-journey map first (orientation), then
-    // the horary bonus for any finished week, the thought log, then the day
-    // itself, browsable from Day 1 up to today.
     clampViewDay(today);
-    root.appendChild(journeyMap(s, hs, today));
-    root.appendChild(horarySection(s));
-    root.appendChild(thoughtLogCard(s));
-    root.appendChild(
-      dayNav(viewDay, today, viewDay !== today ? function () { viewDay = null; renderCycleTab(); } : null)
-    );
+
+    // P0 — the day screen shows only today. The whole-journey map, the horary
+    // bonus and the thought log moved into an opt-in "Your journey" overview,
+    // so the daily loop is one calm scroll, not a dashboard.
+    if (journeyOverview) {
+      const back = el("button", { type: "button", class: "back-link", text: "← Back to today" });
+      back.addEventListener("click", () => { journeyOverview = false; renderCycleTab(); });
+      root.appendChild(back);
+      root.appendChild(el("h2", { text: "Your journey" }));
+      root.appendChild(el("div", { class: "progress-note", text:
+        "Day " + today + ". Miss one and nothing is lost — come back when you can." }));
+      root.appendChild(journeyMap(s, hs, today));
+      root.appendChild(horarySection(s));
+      root.appendChild(thoughtLogCard(s));
+      root.appendChild(glossaryCard());
+      return;
+    }
+
+    const justDone = s.cycle.completedDays.indexOf(viewDay) !== -1 && viewDay === today - 1;
+    const topbar = el("div", { class: "day-topbar" });
+    topbar.appendChild(el("span", { class: "day-where", text:
+      viewDay === today ? "Today" : justDone ? "Today — done" : "Looking back" }));
+    const jump = el("button", { type: "button", class: "day-jump", text: "Your journey →" });
+    jump.addEventListener("click", () => { journeyOverview = true; renderCycleTab(); });
+    topbar.appendChild(jump);
+    root.appendChild(topbar);
+
+    if (today > 1) {
+      root.appendChild(
+        dayNav(viewDay, today, viewDay !== today ? function () { viewDay = null; renderCycleTab(); } : null)
+      );
+    }
     root.appendChild(dayView(viewDay, s, hs, viewDay === today ? "active" : "past"));
   }
 
@@ -1545,15 +1661,23 @@ const UI = (function () {
     return wrap;
   }
 
+  // The day's one activity: pick a practice, carry it through the day, then
+  // note what the body did. The body half only appears once a practice is
+  // chosen — the practice is the experiment, the body note is the result you
+  // read off it. (Merged here from a former standalone "How the body feels"
+  // card; see data.js for the reasoning.)
   function practicePicker(day, week) {
     const wrap = el("div", { class: "card practice-picker" });
     wrap.appendChild(el("h4", { text: "Today's practice" }));
+    wrap.appendChild(el("p", { class: "practice-spirit", text: CONTENT.PRACTICE_SPIRIT.gloss }));
 
     const suggestion = CONTENT.practiceSuggestion(day, week);
     if (suggestion) {
       const sug = CONTENT.PRACTICES.find((x) => x.key === suggestion.key);
-      wrap.appendChild(el("p", { class: "practice-why", text:
-        "Suggested — " + (sug ? sug.label : suggestion.key) + ". " + suggestion.why }));
+      const sugCat = sug && (CONTENT.PRACTICE_CATEGORIES || []).find((c) => c.key === sug.cat);
+      wrap.appendChild(el("p", { class: "practice-nudge", text:
+        "Your chart leans toward " + (sugCat ? sugCat.label : "one door") +
+        " today — " + suggestion.why + " Follow it, or pick your own." }));
     }
 
     const key = "aa_practice_day_" + day;
@@ -1562,7 +1686,8 @@ const UI = (function () {
     try { saved = localStorage.getItem(key); } catch (e) {}
 
     // Grouped into Mind / Speech / Body — the three doors an action comes
-    // through. The suggested practice is highlighted wherever it sits.
+    // through. The nudged practice is outlined wherever it sits; nothing is
+    // pre-selected — choosing is the user's move.
     (CONTENT.PRACTICE_CATEGORIES || []).forEach((catDef) => {
       const inCat = CONTENT.PRACTICES.filter((p) => p.cat === catDef.key);
       if (inCat.length === 0) return;
@@ -1610,6 +1735,98 @@ const UI = (function () {
       const p = CONTENT.PRACTICES.find((x) => x.key === saved);
       if (p) wrap.appendChild(el("p", { class: "small-note", text: p.desc }));
     }
+
+    // ---- the somatic half: folded away until the user asks for it ----
+    // (P0) Selecting a practice should not unfurl ten more sub-sections. The
+    // body note lives behind one "Note how it felt" fold; open state survives
+    // the re-render on each chip tap. One quality + one place, both optional,
+    // stored one JSON key per day (aa_body_day_N), unchanged so past journeys
+    // and the Day-21 pattern still read.
+    if (saved) {
+      const noteFold = el("details", { class: "practice-note" });
+      noteFold.open = (practiceNoteOpenDay === day);
+      noteFold.addEventListener("toggle", () => {
+        practiceNoteOpenDay = noteFold.open ? day : null;
+      });
+      noteFold.appendChild(el("summary", { text: "Note how it felt" }));
+      noteFold.appendChild(el("p", { class: "practice-then-text", text:
+        "Do it today — now or later. Then notice what your body was doing while it happened." }));
+
+      const catKey = saved === "custom"
+        ? null
+        : (CONTENT.PRACTICES.find((x) => x.key === saved) || {}).cat;
+      const cue = CONTENT.practiceBodyCue(catKey, week);
+      if (cue) {
+        noteFold.appendChild(el("div", { class: "body-cue" }, [
+          el("span", { class: "body-cue-label", text: "Where it might show up" }),
+          el("p", { class: "body-cue-text", text: cue })
+        ]));
+      }
+
+      // field: "quality" | "place". A free-text "something else" always sits
+      // alongside the presets — the words are a starting point, not the whole
+      // range of what a body can feel.
+      function bodyRow(items, field, placeholder) {
+        const grid = el("div", { class: "practice-grid" });
+        const note = readBodyNote(day);
+        items.forEach((it) => {
+          const chip = el("button", {
+            type: "button",
+            class: "practice-chip" + (note[field] === it ? " active" : ""),
+            text: it
+          });
+          chip.addEventListener("click", () => {
+            const n = readBodyNote(day);
+            if (n[field] === it) delete n[field]; else n[field] = it;
+            writeBodyNote(day, n);
+            renderCycleTab();
+          });
+          grid.appendChild(chip);
+        });
+        const otherChip = el("button", {
+          type: "button",
+          class: "practice-chip" + (note[field] === "other" ? " active" : ""),
+          text: "something else…"
+        });
+        otherChip.addEventListener("click", () => {
+          const n = readBodyNote(day);
+          if (n[field] === "other") { delete n[field]; delete n[field + "Other"]; }
+          else n[field] = "other";
+          writeBodyNote(day, n);
+          renderCycleTab();
+        });
+        grid.appendChild(otherChip);
+
+        const box = el("div");
+        box.appendChild(grid);
+        if (note[field] === "other") {
+          const input = el("input", { type: "text", class: "body-other", placeholder: placeholder });
+          try { input.value = note[field + "Other"] || ""; } catch (e) {}
+          input.addEventListener("input", () => {
+            const n = readBodyNote(day);
+            n[field + "Other"] = input.value;
+            writeBodyNote(day, n);
+          });
+          box.appendChild(input);
+        }
+        return box;
+      }
+
+      noteFold.appendChild(el("p", { class: "body-log-sub", text: "What your body did" }));
+      noteFold.appendChild(bodyRow(CONTENT.BODY_QUALITIES, "quality", "in your own words"));
+      noteFold.appendChild(el("p", { class: "body-log-sub", text: "Where you felt it" }));
+      noteFold.appendChild(bodyRow(CONTENT.BODY_PLACES, "place", "somewhere else — name it"));
+      noteFold.appendChild(el("p", { class: "small-note", text:
+        "Optional. A snapshot, not a verdict — it'll have changed by tomorrow." }));
+
+      const why = el("details", { class: "body-why" });
+      why.appendChild(el("summary", { text: "Why notice the body?" }));
+      why.appendChild(el("p", { class: "body-why-text", text: CONTENT.BODY_RATIONALE.plain }));
+      noteFold.appendChild(why);
+
+      wrap.appendChild(noteFold);
+    }
+
     return wrap;
   }
 
@@ -1683,22 +1900,40 @@ const UI = (function () {
       frag.appendChild(week3Content(day, s, hs));
     }
 
-    // Three consistent sections in a fixed order: a line to sit with, the
-    // practice you'll do, and what the body noticed afterward.
+    // Two beats in a fixed order: a line to sit with, then the practice —
+    // which carries its own folded "note how it felt" step.
     frag.appendChild(dayQuoteCard(day, week));
     frag.appendChild(practicePicker(day, week));
-    frag.appendChild(bodyLog(day, week));
 
-    if (mode === "active") {
-      const done = s.cycle.completedDays.indexOf(day) !== -1;
-      const doneBtn = el("button", { class: "primary-btn", type: "button",
-        text: done ? "Today already complete ✓" : "Mark today complete" });
-      doneBtn.disabled = done;
-      doneBtn.addEventListener("click", () => { STORE.completeDay(day); viewDay = null; renderCycleTab(); });
-      frag.appendChild(doneBtn);
+    const done = s.cycle.completedDays.indexOf(day) !== -1;
+
+    if (mode === "active" && !done) {
+      // P0 — the "land" beat: an optional paced breath, then a quiet close.
+      // No achievement verb, no confetti, no progress meter at this moment.
+      const land = el("div", { class: "land" });
+      const reduced = prefersReducedMotion();
+      if (!reduced) land.appendChild(el("div", { class: "land-breath", "aria-hidden": "true" }));
+      land.appendChild(el("p", { class: "land-cue", text: reduced
+        ? "Take one slow breath before you close the day."
+        : "One slow breath — in as the circle grows, out as it settles." }));
+      const doneBtn = el("button", { class: "primary-btn", type: "button", text: "That's today" });
+      doneBtn.addEventListener("click", () => {
+        STORE.completeDay(day);
+        viewDay = day;            // stay on the day just finished for its closing moment
+        renderCycleTab();
+      });
+      land.appendChild(doneBtn);
+      frag.appendChild(land);
     } else {
+      const isLatestDone = done && day === STORE.currentDay() - 1;
+      frag.appendChild(el("div", { class: "day-settled" }, [
+        el("div", { class: "day-settled-mark", "aria-hidden": "true", text: done ? "▽" : "○" }),
+        el("p", { class: "day-settled-text", text: isLatestDone
+          ? "That's today. Come back tomorrow."
+          : done ? "That's this day." : "Not done yet." })
+      ]));
       frag.appendChild(el("p", { class: "day-done-note", text:
-        "Completed. You can still revise the practice or the body note above — nothing here is locked." }));
+        "You can still change the practice or the note above — nothing here is locked." }));
     }
     return frag;
   }

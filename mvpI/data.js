@@ -11,6 +11,31 @@
 
 const PLANNED = [
   {
+    title: "Calm pass — P1 / P2 (design goal: user feels settled after using the app)",
+    status: "open",
+    effort: "medium",
+    inProgress: false,
+    statusLabel: "P0 shipped 2026-09-08 — P1/P2 open",
+    desc:
+      "P0 of the calm pass is done (see COMPLETED: one-screen daily loop, folded body note, " +
+      "gentle motion default + toggle, a 'land' closing beat, ledger->mirror copy, focus rings + " +
+      "contrast). Remaining, in priority order. " +
+      "P1: (a) split the journey bridge (journeyIntro) into two calm, skippable screens — " +
+      "intention, then rhythm — with the glossary demoted to a 'Words' link, one primary action " +
+      "each; (b) a proper 'Your journey' overview screen as the single home for map + weekly " +
+      "thought + review + report (P0 only relocated them into a toggled panel); (c) a one-tap " +
+      "session-end feeling check ('settled / same / stirred up'), stored locally, shown back in " +
+      "the Day-21 report as the user's own trend — this is how the North Star gets measured; " +
+      "(d) practice choice + body note as real radiogroup semantics (role=radio / aria-checked), " +
+      "not buttons with an .active class; (e) collapse the three practice categories behind a " +
+      "'Choose a practice' disclosure — the ~12 chips are the day scroll's remaining bulk. " +
+      "P2: (f) a 'just keep the practice' no-tracking mode (practice with no day numbers, map, or " +
+      "brightness) after Day 21 or anytime; (g) env-gate the Construction Site tab for a public " +
+      "launch (stays on for the team build); (h) finish the target-size / contrast audit (wheel " +
+      "planet hit areas, jm-cell, day-nav arrows).",
+    dest: { tab: "cycle", subtab: null, scrollTo: null }
+  },
+  {
     title: "\"Today's choice\" (daily fork) — removed for now, decide if it comes back",
     status: "open",
     effort: "small",
@@ -24,28 +49,6 @@ const PLANNED = [
       "one line in dayView, plus the 'choices you logged' card + choice-strip in divergenceView " +
       "and the reportSummaryText line. Decide whether it returns (maybe sparser — a few times a " +
       "week rather than daily) once there's feedback on the lighter day.",
-    dest: { tab: "cycle", subtab: null, scrollTo: null }
-  },
-  {
-    title: "Horary reveal — depth pass on the Goldstein-Jacobson judgement",
-    status: "open",
-    effort: "medium",
-    inProgress: false,
-    statusLabel: "First version shipped — refine the astro logic",
-    desc:
-      "The weekly horary bonus is in (see COMPLETED). js/horary.js is an honest but prototype-" +
-      "level implementation of the 'cast + highlight' read: significators (Asc ruler, Moon, " +
-      "quesited-house ruler), applying/separating between rulers, translation of light, the " +
-      "Moon's next aspect, and considerations before judgement. Known rough edges to tighten " +
-      "later: (1) applying/separating is a two-sample finite difference (now vs +1h) — fine " +
-      "for direction, not for exact orbs or speed; (2) the Moon's next-aspect search steps " +
-      "every 2h and detects perfection by sign-change or gap-collapse — reliable for " +
-      "sextile/square/trine, patched for conjunction/opposition, but not timed to the hour; " +
-      "(3) no essential-dignity scoring (Goldstein-Jacobson uses it lightly — detriment/fall/" +
-      "exaltation of the significators); (4) 'collection of light' by a slower planet isn't " +
-      "detected, only translation; (5) retrograde is derived (lon decreasing over a day) " +
-      "rather than read from the engine. All descriptive, never a yes/no — that part is by " +
-      "design and stays.",
     dest: { tab: "cycle", subtab: null, scrollTo: null }
   },
   {
@@ -406,18 +409,23 @@ const PLANNED = [
       "cusps as internally consistent but not externally verified."
   },
   {
-    title: "Chiron precision is approximate — needs real orbital elements",
+    title: "Chiron — DISABLED for MVP v1, re-enable with Swiss Ephemeris",
     status: "open",
     effort: "medium",
     inProgress: false,
-    statusLabel: "Not started",
+    statusLabel: "Disabled 2026-09-08 — was 60–170° off real data",
     desc:
-      "Chiron isn't in the vendored astronomy-engine library, so the MVP computes it via a " +
-      "simple two-body Keplerian propagation from mean J2000 elements, with no perturbation " +
-      "modelling. Chiron's real orbit is perturbed noticeably by its proximity to Saturn and " +
-      "Uranus, so this is a rough approximation, not production precision — flagged with " +
-      "\"(approx.)\" in the chart display. Replace once Swiss Ephemeris is integrated, since " +
-      "it includes Chiron properly."
+      "Chiron isn't in the vendored astronomy-engine library. The MVP computed it via a simple " +
+      "two-body Keplerian propagation from mean J2000 elements with NO perturbation term; " +
+      "Chiron's orbit is strongly perturbed by Saturn and Uranus, so the result landed 60–170° " +
+      "from Swiss Ephemeris — a whole sign-opposition wrong on Lindsey's own chart (we showed " +
+      "Sagittarius ~25°, astro.com Gemini 13°56'). It adds nothing to the 21-day journey, so on " +
+      "2026-09-08 it was fully disabled: removed from ASTRO.BODY_ORDER and no longer computed in " +
+      "computePositions() (helper fns chironHeliocentricEclJ2000 / chironGeocentricEclOfDate / " +
+      "solveKepler / CHIRON_ELEMENTS left in place, unreferenced, for the swap). It is now absent " +
+      "from the wheel, the degrees table, the aspect list, and the composite chart. Re-enable it " +
+      "together with the real Swiss Ephemeris — uncomment the three lines in computePositions and " +
+      "add \"Chiron\" back to BODY_ORDER."
   },
   {
     title: "Geo-block mainland China (IP/region check)",
@@ -465,6 +473,203 @@ const PLANNED = [
 ];
 
 const COMPLETED = [
+  {
+    date: "2026-09-08",
+    title: "Calm pass (P0) — design goal: user feels settled, not stimulated, after using the app",
+    desc:
+      "From Lindsey's design brief (goal: 'user feels happy and at peace after using this app'). " +
+      "Root cause: a clash of two emotional targets built across sessions — an earlier 'feel alive " +
+      "/ curious / playful' pass (anticipation motion, gamified reveals, progress-as-achievement) " +
+      "vs. the new 'peace' goal (reduction, spaciousness, closure). Fix = a calm pass, not a " +
+      "redesign. SHIPPED (P0 of a P0/P1/P2 plan): " +
+      "(1) DAILY LOOP = ONE SCREEN. renderCycleTab's in-progress branch no longer stacks the " +
+      "journey map + horary section + thought log above the day; they moved into an opt-in 'Your " +
+      "journey' overview reached by a quiet 'Your journey →' link in a new .day-topbar ('← Back to " +
+      "today' returns). The day screen shows only today (day nav appears only once there is " +
+      "history). A fresh Day 1 at 375x812 measures ~1.7 viewport-heights, one primary action, 2 " +
+      "accent-coloured elements. " +
+      "(2) PRACTICE CARD. The somatic half (cue + quality/place rows + 'why notice the body') is " +
+      "folded behind one <details> 'Note how it felt' instead of unfurling on selection; open " +
+      "state survives re-render via practiceNoteOpenDay. The 'THEN' pill is gone. " +
+      "(3) MOTION DEFAULT = GENTLE. <html data-motion> (app.js initMotionPref; persisted as " +
+      "aa_motion_pref; a Gentle/Lively toggle in the account drawer). Under gentle (default) the " +
+      "reveal/celebration layer does not animate — .sw-tile.just-unlocked -> a 0.3s fade; " +
+      ".sw-reveal-burst / .sw-unlock-badge / .brightness-burst display:none; brightness glow off; " +
+      "star 'arrive' burst -> plain twinkle; night-sky opacity 0.7 -> 0.42. 'Lively' restores it " +
+      "all. prefers-reduced-motion still wins. " +
+      "(4) CLOSING BEAT. 'Mark today complete' -> a 'land' beat: an optional paced-breath circle " +
+      "(.land-breath 9s; static for reduced-motion) + 'One slow breath…' + a 'That's today' " +
+      "button. Completing stays on that day: '▽ That's today. Come back tomorrow.' — no %/star/" +
+      "confetti in that moment. Past days show '▽ That's this day.' " +
+      "(5) COPY REFRAME. Chart: 'It names what you're good at — and what it costs' -> '…and the " +
+      "shadow each one casts'; 'Viewing my chart' -> 'Your strengths, and their shadows'; sw-card " +
+      "note ledger->mirror. Journey progress note -> 'Day N. Miss one and nothing is lost — come " +
+      "back when you can.' Empty thought log + horary 'one per week' eased. " +
+      "(6) A11Y. --text-faint #6a708a -> #8b93ab (clears 4.5:1 on --bg-card); global :focus-visible " +
+      "ring (--focus-ring / --focus-offset tokens); removed the chart wheel's outline:none; roomier " +
+      "tap targets on (pointer:coarse) — practice/horary chips min-height 40, thought-delete 32. " +
+      "Verified: regression suite still passes (TZ, Zhuhai degeneracy, Placidus cusps); full " +
+      "click-through form -> chart -> intro -> Day 1 practice+land -> complete -> overview -> Day-21 " +
+      "-> all tabs -> motion toggle, zero console errors. P1/P2 remain: a 2-screen 'before you " +
+      "begin', a session-end feeling check, radiogroup semantics for the choices, a 'just keep the " +
+      "practice' no-tracking mode, and collapsing the practice categories behind 'Choose a " +
+      "practice' (the day scroll's remaining bulk). Logged as a PLANNED item.",
+    dest: { tab: "cycle", subtab: null, scrollTo: null }
+  },
+  {
+    date: "2026-09-08",
+    title: "MVP v1 finalized — Chiron disabled, regression + full click-through clean",
+    desc:
+      "Lindsey chose to ship mvpI/ as MVP v1 (browser-local, no backend — the scope RELEASE_PLAN " +
+      "always had for the first release). Finalize pass: (1) CHIRON DISABLED (see PLANNED item) — " +
+      "it was 60–170° off real data; removed from ASTRO.BODY_ORDER and from computePositions(), so " +
+      "it's gone from the wheel, the degrees table, the aspect list and the composite chart. " +
+      "astro-engine.js header updated; test.html no longer references it. (2) ui.js chartCard: the " +
+      "'Exact degrees (N)' count now reflects the rows actually rendered (was Object.keys(positions) " +
+      "which included the hidden SouthNode). (3) REGRESSION (test.html / regression.js) — all four " +
+      "product-spec cases pass: TZ offsets 480/480/60/480 correct, the two Zhuhai charts 15 min " +
+      "apart flagged near-identical (max body delta 0.145°, Asc/MC move ~4°), Placidus cusps " +
+      "monotonic with cusp1=ASC / cusp10=MC / cusp7=cusp1+180. Sun–Pluto + nodes verified against " +
+      "reality for Lindsey (Sun Leo 23.5°, Saturn Scorpio 22°, Jupiter Aquarius 10.5°…). (4) FULL " +
+      "CLICK-THROUGH in a fresh browser tab: real birth-data form -> chart -> 'How this works' -> " +
+      "journey intro (spirit quote + horary intro) -> Day 1 practice card (THEN / body cue / body " +
+      "rows) -> horary cast from a logged thought -> Day-21 report + review-all -> People / Galaxy " +
+      "/ Privacy / Construction Site -> 'Start over from Day 1'. Zero console errors anywhere. " +
+      "preview.html rebuilt.",
+    dest: { tab: "mychart", subtab: null, scrollTo: null }
+  },
+  {
+    date: "2026-09-08",
+    title: "Reframe the 21-day intro line + expand the plain-language toolkit (signs / houses / horary)",
+    desc:
+      "Lindsey. (1) INTRO REWRITE. The 'How this works' third row ('A 21-day journey is there if you " +
+      "want it') swapped its logistics blurb for a spirit line, capped at 30 words: 'Your chart is " +
+      "your life map: planets carrying energy until you use it. We're here to experience, create, " +
+      "share love. You always choose. These 21 days activate what's yours.' (five-minutes / never-" +
+      "resets logistics still live on journeyIntro's 'What a day asks of you' card and the 'Why 21 " +
+      "days' glossary entry.) (2) TOOLKIT. content.js GLOSSARY: the old one-line 'Sign' and 'House' " +
+      "entries became 'The 12 signs' and 'The 12 houses', each with a `list` of all twelve + a " +
+      "one-phrase gloss; a new 'Horary chart' entry ('a chart drawn for the exact moment a question " +
+      "is asked … never a yes or no, only the shape of the matter'). ui.js glossaryCard() now " +
+      "renders an optional `g.list` as an indented definition sub-list (.gloss-list, left-border). " +
+      "The card is the same collapsible 'New here? What these words mean' already shown on the " +
+      "Journey tab, the Day-21 screen, and the journey intro — so the toolkit is reachable " +
+      "everywhere onboarding copy appears. `BODY_RATIONALE` still points at GLOSSARY's last entry " +
+      "('Why notice the body?'), which stays last. Verified: 29-word intro line, both lists render, " +
+      "horary entry present, no console errors.",
+    dest: { tab: "cycle", subtab: null, scrollTo: null }
+  },
+  {
+    date: "2026-09-08",
+    title: "Horary reveal — depth pass on the Goldstein-Jacobson judgement",
+    desc:
+      "Tightened all five rough edges in js/horary.js, still descriptive-only. " +
+      "(1) APPLYING/SEPARATING now uses an instantaneous longitude rate (a 1-minute central " +
+      "difference on the ephemeris, since the vendored engine has no velocity term), traditional " +
+      "moiety-sum orbs (half of Lilly's whole orbs, added), and estimates days-to-perfection from " +
+      "the relative speed — surfaced in the reveal as 'going by their speeds they'd line up in " +
+      "about N days'. (2) THE MOON'S NEXT ASPECT steps 30 min (one ephemeris sample per step, " +
+      "reused between steps), brackets a perfection by sign-change of the signed gap, then bisects " +
+      "~32x to the minute; the earliest perfection in a step wins; capped at 3.5 days (the Moon " +
+      "always aspects or changes sign inside that). Reveal now says 'very soon' / 'in about N " +
+      "hours' / 'in about N days', and names the sign a void Moon moves into. (3) ESSENTIAL " +
+      "DIGNITY: domicile / exaltation / detriment / fall / peregrine for each significator " +
+      "(EXALTATION table + detriment=opposite-of-domicile, fall=opposite-of-exaltation), shown as " +
+      "one plain sentence ('on home ground', 'a guest of honour', 'far from home', 'on the back " +
+      "foot', 'just passing through'). (4) COLLECTION OF LIGHT: a slower planet both significators " +
+      "are applying to is now detected and rendered ('a slower star is gathering up both threads " +
+      "at once'), distinct from translation (a faster go-between). (5) RETROGRADE + STATIONARY " +
+      "read off the same instantaneous rate, not a one-day chord; also added cazimi (17'), " +
+      "combust (8.5 deg), and under-the-beams (15 deg) solar conditions, and a void-of-course " +
+      "'consideration before judgement'. ~26 ms per cast (measured). ui.js horaryReveal: new " +
+      "DIGNITY_PHRASE map + phraseDuration() helper; dignity line for both significators; timed " +
+      "connection + Moon lines; collection sentence. Verified across a spread of dates/topics — " +
+      "applying/separating, translation, collection, retro, stationary, cazimi, VOC all fire; " +
+      "no console errors.",
+    dest: { tab: "cycle", subtab: null, scrollTo: null }
+  },
+  {
+    date: "2026-09-08",
+    title: "Investigated the \"reading 'year'\" load error — no bug, it was a stale console entry",
+    desc:
+      "Lindsey asked to fix a TypeError ('Cannot read properties of undefined (reading \\'year\\')') " +
+      "that appeared in the console on load. Chased it with a top-level window.onerror handler " +
+      "injected as the first <script> in index.html, capturing full stack + a fresh browser tab. " +
+      "Result: NO error fires. A clean tab loading the app — bare, and with a mid-journey state " +
+      "seeded and reloaded straight onto #cycle — produces zero console output and renders every " +
+      "tab correctly. The error the earlier session kept seeing was a STALE buffered entry in the " +
+      "dev-tools console from the very first debugging attempt, when a malformed test profile was " +
+      "seeded via JS: STORE.setMe({ date:'1990-06-15', time:'14:30', ... }) with no `wall` key, so " +
+      "computeChart -> profile.wall.year threw once, legitimately. That single real throw stuck in " +
+      "the console readout and was misread as a recurring load-order race. Real user flow (the " +
+      "birth-data form always builds { wall:{year,month,day,hour,minute}, place, unknownTime }) was " +
+      "never affected. Diagnostic <script> removed from index.html; the PLANNED item is dropped. " +
+      "Nothing to fix in app code.",
+    dest: { tab: "cycle", subtab: null, scrollTo: null }
+  },
+  {
+    date: "2026-09-08",
+    title: "Horary reveal in plain words; a horary intro before Day 1; \"Start over from Day 1\"",
+    desc:
+      "Three requests from Lindsey. (1) PLAIN-LANGUAGE HORARY. The weekly reveal was full of craft " +
+      "terms (querent, quesited, Ascendant, ruler, house numbers, applying/separating, translation " +
+      "of light, void of course, combust, via combusta, 'radical'). Rewritten so it reads like a " +
+      "story: js/ui.js gains HOUSE_PLAIN (each house -> an everyday area of life) and PLANET_PLAIN " +
+      "(each planet -> 'what it's about'); horaryReveal's four blocks are retitled and reworded " +
+      "('The star that means you' / 'What happens next' / 'The star that means what you asked " +
+      "about' / 'How the two are getting on'); degrees are dropped from the prose (the wheel still " +
+      "shows them). js/horary.js: radical() notes and the retrograde/combust flags rewritten in " +
+      "the same plain register. horaryAskForm intro + the 'one per week' line eased too. Still " +
+      "descriptive only — never a yes/no. (2) HORARY INTRO. journeyIntro() gains a card, 'Once a " +
+      "week: a strong thought', between 'What a day asks of you' and the twins note, so a first-" +
+      "timer knows the weekly bonus is coming and what it is. Later follow-up: the same horary " +
+      "blurb ('A weekly extra: a strong thought') was also added as a fourth row on the 'How this " +
+      "works' first-run screen (howItWorksIntro), so it's covered wherever onboarding copy appears. " +
+      "(3) RESTART. New STORE.restartJourney() " +
+      "— clears completedDays, choices, seenUnlocks, brightnessMilestone, this cycle's thoughts + " +
+      "horaryAsked, and the per-day practice/body localStorage keys; KEEPS s.me and cycle.number " +
+      "(a redo, not repeatCycle's next-cycle bump). Surfaced as a quiet 'Start over from Day 1' " +
+      "button (.offer-btn-quiet) under 'Continue the journey' on the My chart page, behind a " +
+      "window.confirm. Verified in-app: plain reveal renders, intro card shows, restart zeroes the " +
+      "journey and lands on Day 1 with the chart intact. NOTE: spotted a pre-existing load-time " +
+      "console TypeError (logged as its own PLANNED item) — not from this work.",
+    dest: { tab: "cycle", subtab: null, scrollTo: null }
+  },
+  {
+    date: "2026-09-08",
+    title: "Practice + body merged into one card; practice is a choice; Trungpa line as the spirit",
+    desc:
+      "Lindsey, as a first-time user: it isn't obvious why \"Today's practice\" and \"How the body " +
+      "feels\" sit next to each other — they share no vocabulary, the timing (\"fill this in now, or " +
+      "after I do the practice?\") is unstated, and the \"in the body\" cue was keyed to the day's " +
+      "planet, not to whatever practice you picked. Decision: Tier 3 — drop the standalone \"How the " +
+      "body feels\" card and fold the body note into the practice card as its second step. " +
+      "(1) MERGE. ui.js practicePicker now renders the body half itself, and ONLY after a practice " +
+      "is chosen: a \"then\" connector (\"Do it today — now, or whenever it fits. Then come back and " +
+      "note what your body did...\"), a practice-keyed cue (\"While you do it\"), the one-tap " +
+      "quality/place rows, the \"Optional — a snapshot, not a verdict\" note, and the \"Why notice " +
+      "the body?\" details. Standalone bodyLog() and bodyCueCard() deleted; readBodyNote / " +
+      "writeBodyNote / bodyPatternCard kept. dayView drops its bodyLog() call — two cards now " +
+      "(quote, practice), not three. Storage keys unchanged (aa_practice_day_N, aa_body_day_N), so " +
+      "past journeys and the review list still read. (2) PRACTICE IS A CHOICE. The per-planet " +
+      "\"Suggested — X\" line is demoted to a soft nudge (\"Your chart leans toward Speech today — " +
+      "...  Follow it, or pick your own.\"); still nothing pre-selected. (3) BODY CUE FOLLOWS THE " +
+      "PRACTICE. New content.js practiceBodyCue(catKey, week) + PRACTICE_BODY_CUE (mind = head/jaw/" +
+      "breath, speech = throat/chest, body = wherever it lands) + WEEK3_PRACTICE_BODY_CUE. " +
+      "CONTENT.bodyCueForDay / PLANET_BODY_CUE still exported but no longer shown. (4) THE SPIRIT. " +
+      "New content.js PRACTICE_SPIRIT (the Chögyam Trungpa \"complete acceptance and openness...\" " +
+      "passage + a one-line gloss). Full quote on a \"The practice behind all of it\" card in " +
+      "journeyIntro; the gloss echoed at the top of the practice card. \"Why notice the body?\" " +
+      "glossary text rewritten so it names all three links: chart names a tendency -> practice " +
+      "engages it -> the body shows the signature. (5) DAY-21. bodyPatternCard now pairs the " +
+      "most-chosen practice door with the body reading per phase (\"On your gift days you leaned on " +
+      "Body practices, and the body most often felt 'tight', around the chest.\"); heading -> " +
+      "\"What you practised, what your body did\". journeyReviewAll rows show the practice LABEL " +
+      "(not the raw key) plus \"· felt <quality>\". CSS: .practice-spirit, .practice-nudge, " +
+      ".practice-then. Verify in-app: pick a practice on an active day -> body half appears; " +
+      "deselect -> it collapses; Day-21 report + review list read correctly; no console errors.",
+    dest: { tab: "cycle", subtab: null, scrollTo: null }
+  },
   {
     date: "2026-09-07",
     title: "Consistent daily sequence (Quote / Practice / Body); dropped \"Today's choice\"",

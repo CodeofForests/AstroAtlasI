@@ -4,13 +4,14 @@
  * Positions for Sun..Pluto come straight from the vendored astronomy-engine
  * library (vendor/astronomy.browser.js, MIT — see Construction Site for the
  * decision to use it as a stand-in for the paid Swiss Ephemeris SDK).
- * Chiron and the lunar nodes aren't in that library, so they're computed
- * here from published orbital elements — see the comments on each.
+ * The lunar nodes aren't in that library, so they're computed here (mean
+ * node, Meeus). Chiron isn't either — its approximate two-body model was
+ * too far off to ship, so it is DISABLED for MVP v1 (see computePositions).
  *
  * Method, declared per product description §6:
  *  - tropical zodiac
  *  - Placidus houses by default, Whole Sign toggle
- *  - Sun–Pluto, Chiron, lunar nodes (asteroids off by default)
+ *  - Sun–Pluto + mean lunar nodes (Chiron and asteroids off)
  *  - Ptolemaic major aspects, orb table below
  */
 
@@ -34,9 +35,10 @@ const ASTRO = (function () {
     "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"
   ];
 
+  // "Chiron" intentionally omitted for MVP v1 — see computePositions().
   const BODY_ORDER = [
     "Sun", "Moon", "Mercury", "Venus", "Mars", "Jupiter", "Saturn",
-    "Uranus", "Neptune", "Pluto", "Chiron", "NorthNode", "SouthNode"
+    "Uranus", "Neptune", "Pluto", "NorthNode", "SouthNode"
   ];
 
   // Ptolemaic majors, published orb table (degrees). Luminaries get a wider
@@ -256,9 +258,16 @@ const ASTRO = (function () {
       }
     );
 
-    const earthHelio = Astronomy.HelioVector("Earth", time);
-    const chironEcl = chironGeocentricEclOfDate(time, earthHelio);
-    positions.Chiron = { lon: norm360(chironEcl.elon), lat: chironEcl.elat, approximate: true };
+    // Chiron is DISABLED for MVP v1. The two-body Keplerian propagation below
+    // (chironHeliocentricEclJ2000 / chironGeocentricEclOfDate) has no planetary
+    // perturbation term and was landing 60–170° from Swiss Ephemeris — a whole
+    // sign-opposition wrong on real data. It adds nothing to the 21-day journey,
+    // so it is not computed or shown. Re-enable together with the real
+    // ephemeris (Construction Site: "Chiron precision …"). The helper functions
+    // are left in place, unreferenced, for that swap.
+    // const earthHelio = Astronomy.HelioVector("Earth", time);
+    // const chironEcl = chironGeocentricEclOfDate(time, earthHelio);
+    // positions.Chiron = { lon: norm360(chironEcl.elon), lat: chironEcl.elat, approximate: true };
 
     const node = meanNodeLongitude(T);
     positions.NorthNode = { lon: node, lat: 0, mean: true };

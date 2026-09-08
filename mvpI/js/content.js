@@ -121,12 +121,40 @@ const CONTENT = (function () {
     { term: "Why 21 days",
       plain: "Long enough to try something new every day and actually feel it change; short enough that you can see the finish line from the start.",
       real: "Three weeks: one for your strengths, one for their costs, one for the people around you." },
-    { term: "Sign (Aries, Leo…)",
-      plain: "Which slice of sky a planet was sitting in. Picture the sky as a wheel cut into 12 named slices, each with its own flavour.",
-      real: "The zodiac — 12 equal 30° segments along the Sun's yearly path." },
-    { term: "House",
-      plain: "Which room of your life a planet shows up in most — a 'money room', a 'friends room', a 'home room'. There are 12 rooms.",
-      real: "The 12 houses, set by the exact time and place of birth." },
+    { term: "The 12 signs",
+      plain: "Which slice of sky a planet was sitting in. Picture the sky as a wheel cut into 12 named slices, each with its own flavour — the flavour colours how that part of you acts.",
+      real: "The zodiac — 12 equal 30° segments along the Sun's yearly path.",
+      list: [
+        { name: "Aries", gloss: "bold, first to move" },
+        { name: "Taurus", gloss: "steady, likes what lasts" },
+        { name: "Gemini", gloss: "curious, quick, talkative" },
+        { name: "Cancer", gloss: "caring, home-centred, protective" },
+        { name: "Leo", gloss: "warm, generous, wants to be seen" },
+        { name: "Virgo", gloss: "precise, helpful, improves things" },
+        { name: "Libra", gloss: "fair-minded, seeks balance and company" },
+        { name: "Scorpio", gloss: "intense, all-in, digs deep" },
+        { name: "Sagittarius", gloss: "adventurous, honest, big-picture" },
+        { name: "Capricorn", gloss: "disciplined, builds for the long run" },
+        { name: "Aquarius", gloss: "independent, inventive, community-minded" },
+        { name: "Pisces", gloss: "imaginative, sensitive, compassionate" }
+      ] },
+    { term: "The 12 houses",
+      plain: "Which room of your life a planet shows up in most — a 'money room', a 'friends room', a 'home room'.",
+      real: "The 12 houses, set by the exact time and place of birth.",
+      list: [
+        { name: "1st", gloss: "you — your body, your style, how you begin" },
+        { name: "2nd", gloss: "money, belongings, what you value" },
+        { name: "3rd", gloss: "talking, learning, siblings, short trips" },
+        { name: "4th", gloss: "home, family, roots" },
+        { name: "5th", gloss: "creativity, romance, children, play" },
+        { name: "6th", gloss: "daily work, health, routines" },
+        { name: "7th", gloss: "partners, close others, open rivals" },
+        { name: "8th", gloss: "shared money, deep change, intimacy" },
+        { name: "9th", gloss: "beliefs, study, travel, the big picture" },
+        { name: "10th", gloss: "career, reputation, your public role" },
+        { name: "11th", gloss: "friends, groups, hopes" },
+        { name: "12th", gloss: "rest, the hidden, what's behind the scenes" }
+      ] },
     { term: "Aspect",
       plain: "When two planets sit at a special angle to each other, so they work as a team — or argue.",
       real: "Angular links like conjunction (0°), square (90°), trine (120°)." },
@@ -145,12 +173,15 @@ const CONTENT = (function () {
     { term: "North Node / South Node",
       plain: "The South Node is the move you already know by heart. The North Node is the direction you're still growing toward — the stretch.",
       real: "The two points where the Moon's path crosses the Sun's." },
+    { term: "Horary chart",
+      plain: "A chart drawn for the exact moment a question is asked, wherever you were — the sky at that instant is read as a picture of that one question. A very old branch of astrology. Here it never gives a yes or no, only the shape of the matter.",
+      real: "Cast for the time and place a question 'struck'; the ruler of you, the ruler of the matter, and the Moon's next aspect are read descriptively (Goldstein-Jacobson style)." },
     { term: "The map and you",
       plain: "Your chart is a map of the ground you started on. It doesn't drive the car. Every choice you make is you turning the wheel — which is why twins with almost the same chart still live totally different lives.",
       real: "The chart describes tendencies, not a fixed future. Nothing here predicts what will happen." },
     { term: "Why notice the body?",
-      plain: "Your chart doesn't act on your body. What it names is a handful of tendencies — ways you reliably lean. Each one has a felt signature: when your “act first” tendency fires, something moves in your chest and hands before you've decided anything. That sensation is the earliest sign a pattern is running — sooner than the thought, sooner than the action. Learn its signature and you get a choice you didn't have before. And because it always passes, you also see it isn't you — just weather moving through.",
-      real: "The chart points to tendencies; a tendency has a body signature that precedes the thought. Noticing it is the earliest point you can catch the pattern — and watching it pass is how you stop being run by it." }
+      plain: "Your chart names a tendency — a way you reliably lean. The practice is how you try it on for a day, on purpose. And your body shows the signature: when that tendency fires, something moves — in the chest, the throat, the hands — before you've decided anything. That sensation is the earliest sign the pattern is running: sooner than the thought, sooner than the action. Learn its signature and you get a choice you didn't have before. And because it always passes, you also see it isn't you — just weather moving through.",
+      real: "The chart points to a tendency; the practice deliberately engages it; the tendency has a body signature that precedes the thought. Noticing it is the earliest point you can catch the pattern — and watching it pass is how you stop being run by it." }
   ];
   // Same words, reused inline on the body-log card so the explanation is
   // said once and stays consistent wherever it appears.
@@ -320,6 +351,36 @@ const CONTENT = (function () {
     return PLANET_BODY_CUE[WEEK_BODIES[(day - 1) % 7]] || null;
   }
 
+  // The line the whole Practices section hangs off — the origin of the
+  // mind / speech / body split. Shown in full on the journey intro, echoed
+  // in one line on the practice card itself.
+  const PRACTICE_SPIRIT = {
+    quote:
+      "The every day practice is simply to develop a complete acceptance and " +
+      "openness to all situations and emotions and all people, experiencing " +
+      "everything totally without reservations or blockages, so that one never " +
+      "withdraws or centralizes into oneself.",
+    who: "Chögyam Trungpa Rinpoche",
+    gloss: "That openness is practised through three doors — mind, speech, and body. Each day, you pick one and give it the day."
+  };
+
+  // Body cue keyed to the CHOSEN practice's door, not the day's planet — so
+  // "where to feel it" matches what the user is actually doing. Same
+  // phenomenological register as PLANET_BODY_CUE: it comes, it passes, it
+  // isn't the self.
+  const PRACTICE_BODY_CUE = {
+    mind: "Thought tends to show up around the head — the jaw, the temples, behind the eyes, breath riding high in the chest, a buzz in the hands. When the practice stirs one up, that's usually where it lands first.",
+    speech: "Words gather in the throat and chest — a tightening before you speak, a held breath, heat in the face when something stays unsaid. Notice it as you talk, or as you choose not to.",
+    body: "This one shows up wherever the movement or the stillness goes — the belly, the shoulders, the legs, the hands. The body was already saying it; the practice just makes it easier to hear."
+  };
+  const WEEK3_PRACTICE_BODY_CUE =
+    "With someone else in mind, the body reacts before the thought does — where you tighten, lean away, soften, or brace. It shifts as they shift, and as you do.";
+
+  function practiceBodyCue(catKey, week) {
+    if (week === 3) return WEEK3_PRACTICE_BODY_CUE;
+    return PRACTICE_BODY_CUE[catKey] || null;
+  }
+
   // Vocabulary for the one-tap body log. Kept small and plain so a first-time
   // user isn't asked to introspect in jargon. One quality + one place, both
   // optional — a snapshot, never a verdict.
@@ -460,6 +521,8 @@ const CONTENT = (function () {
     experimentFor: experimentFor,
     week3Fork: week3Fork,
     practiceSuggestion: practiceSuggestion,
+    PRACTICE_SPIRIT: PRACTICE_SPIRIT,
+    practiceBodyCue: practiceBodyCue,
     quoteForDay: quoteForDay,
     bodyCueForDay: bodyCueForDay,
     BODY_QUALITIES: BODY_QUALITIES,

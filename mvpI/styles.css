@@ -6,7 +6,7 @@
   --border: #2c3142;
   --text: #e7e9f0;
   --text-dim: #9aa0b4;
-  --text-faint: #6a708a;
+  --text-faint: #8b93ab;   /* lifted from #6a708a to clear 4.5:1 on --bg-card */
   --accent: #8b7cf6;
   --accent-dim: #6659c4;
   --gold: #e8b34c;
@@ -15,6 +15,17 @@
   --medium: #e8b34c;
   --large: #e0645f;
   --radius: 10px;
+  --focus-ring: 2px solid #a99bff;
+  --focus-offset: 2px;
+}
+
+/* Visible keyboard focus everywhere (was missing; the chart wheel even set
+   outline:none). Mouse clicks don't trigger :focus-visible, so this stays
+   quiet for pointer users. */
+:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-offset);
+  border-radius: 3px;
 }
 
 * { box-sizing: border-box; }
@@ -784,7 +795,7 @@ section.cs-section h2 {
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--accent);
+  color: var(--text-dim);
 }
 .practice-cat-blurb { font-size: 11px; color: var(--text-faint); line-height: 1.4; }
 .practice-grid { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -801,6 +812,41 @@ section.cs-section h2 {
 .practice-chip.suggested { border-color: var(--accent); color: var(--text); }
 .practice-chip.suggested.active { border-color: var(--gold); }
 .practice-why { font-size: 12px; line-height: 1.5; color: var(--text-dim); margin: 0 0 10px; }
+
+/* the Trungpa line the practice hangs off — one echo on the card, full on the intro */
+.practice-spirit { font-size: 12px; line-height: 1.55; color: var(--text-dim); margin: 0 0 10px; font-style: italic; }
+.practice-spirit-card .day-quote { margin: 4px 0 10px; }
+/* the demoted chart nudge — present, not prescriptive */
+.practice-nudge {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-dim);
+  margin: 0 0 12px;
+  padding-left: 10px;
+  border-left: 2px solid var(--accent-dim);
+}
+/* the "then" connector between choosing a practice and noting the body */
+.practice-then {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  margin: 16px 0 4px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.practice-then-step {
+  flex: none;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: rgba(139,124,246,0.10);
+  border-radius: 999px;
+  padding: 3px 9px;
+  margin-top: 1px;
+}
+.practice-then-text { font-size: 12.5px; line-height: 1.55; color: var(--text-dim); margin: 0; }
 .practice-custom {
   width: 100%;
   margin-top: 10px;
@@ -842,7 +888,7 @@ section.cs-section h2 {
 .day-progression {
   font-size: 12px;
   line-height: 1.5;
-  color: var(--accent);
+  color: var(--text-dim);
   margin: 0 0 12px;
 }
 
@@ -957,7 +1003,7 @@ section.cs-section h2 {
   font-size: 10.5px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--accent);
+  color: var(--text-faint);
   margin-bottom: 4px;
 }
 .body-cue-text { font-size: 12.5px; line-height: 1.55; color: var(--text-dim); margin: 0; }
@@ -1017,6 +1063,9 @@ section.cs-section h2 {
   cursor: pointer;
 }
 .offer-btn:hover { background: var(--accent-dim); border-color: var(--accent); color: #fff; }
+/* lower-emphasis offer button — a "start over" that shouldn't compete with "continue" */
+.offer-btn-quiet { border-color: var(--border); color: var(--text-faint); font-weight: 500; }
+.offer-btn-quiet:hover { background: transparent; border-color: var(--text-dim); color: var(--text-dim); }
 
 .journey-weeks .jw-row { padding: 9px 0; border-bottom: 1px solid var(--border); }
 .journey-weeks .jw-row:last-child { border-bottom: none; }
@@ -1046,6 +1095,9 @@ section.cs-section h2 {
 .gloss-term { display: block; font-size: 12.5px; color: var(--text); margin-bottom: 3px; }
 .gloss-plain { font-size: 12.5px; line-height: 1.55; color: var(--text-dim); margin: 0 0 4px; }
 .gloss-real { font-size: 11.5px; line-height: 1.5; color: var(--text-faint); margin: 0; font-style: italic; }
+.gloss-list { margin: 6px 0 0; padding-left: 10px; border-left: 2px solid var(--border); }
+.gloss-list-row { font-size: 12px; line-height: 1.5; color: var(--text-dim); margin: 2px 0; }
+.gloss-list-name { font-weight: 600; color: var(--text); }
 
 /* ---- daily fork ---- */
 .fork { margin-top: 14px; }
@@ -1309,7 +1361,8 @@ section.cs-section h2 {
 
 .chart-wheel .cw-aspect { opacity: 0.75; transition: opacity 0.18s ease, stroke-width 0.18s ease; }
 .chart-wheel .cw-planet { cursor: pointer; }
-.chart-wheel .cw-planet:focus { outline: none; }
+.chart-wheel .cw-planet:focus:not(:focus-visible) { outline: none; }
+.chart-wheel .cw-planet:focus-visible { outline: var(--focus-ring); outline-offset: 1px; }
 .chart-wheel .cw-planet-dot,
 .chart-wheel .cw-planet .cw-planet-tick { transition: stroke-width 0.15s ease, opacity 0.18s ease; }
 .chart-wheel .cw-planet:hover .cw-planet-dot,
@@ -1449,3 +1502,141 @@ section.cs-section h2 {
 .horary-factor:first-child { border-top: none; }
 .horary-factor .horary-label { margin-top: 0; }
 .horary-factor .day-text { font-size: 12.5px; margin: 4px 0 0; }
+
+/* ============================================================
+   P0 — the calm pass. Fewer signals per screen, motion gentle
+   by default, a real closing beat, more air in the day loop.
+   ============================================================ */
+
+/* ---- Motion preference. Default (no attr / "gentle") = calm:
+   the reveal / celebration layer does not animate, and its
+   pure-chrome pieces (badge, burst) are hidden. "lively" restores
+   the full playful layer. prefers-reduced-motion still wins. ---- */
+:root:not([data-motion="lively"]) .sw-tile.just-unlocked,
+:root:not([data-motion="lively"]) .sw-unlock-badge,
+:root:not([data-motion="lively"]) .sw-reveal-burst,
+:root:not([data-motion="lively"]) .sw-reveal-burst-spark,
+:root:not([data-motion="lively"]) .brightness-bar-wrap.just-brightened .brightness-bar,
+:root:not([data-motion="lively"]) .brightness-bar-wrap.just-brightened .brightness-fill,
+:root:not([data-motion="lively"]) .brightness-burst,
+:root:not([data-motion="lively"]) .journey-star.is-new {
+  animation: none;
+}
+:root:not([data-motion="lively"]) .sw-reveal-burst,
+:root:not([data-motion="lively"]) .sw-unlock-badge,
+:root:not([data-motion="lively"]) .brightness-burst {
+  display: none;
+}
+:root:not([data-motion="lively"]) .sw-tile.just-unlocked {
+  animation: aa-quiet-in 0.3s ease both;
+}
+@keyframes aa-quiet-in { from { opacity: 0.45; } to { opacity: 1; } }
+/* the star still appears, it just doesn't burst in */
+:root:not([data-motion="lively"]) .journey-star.is-new {
+  animation: journey-twinkle 3.4s ease-in-out infinite;
+}
+/* a quieter night sky */
+:root:not([data-motion="lively"]) body::before { opacity: 0.42; }
+
+.drawer-setting {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 4px 0 12px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+.drawer-setting-label { font-size: 12px; color: var(--text-faint); }
+.drawer-setting-opts { display: flex; gap: 6px; }
+.drawer-setting-opts button {
+  flex: 1;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.drawer-setting-opts button.active {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+/* ---- the day loop: only today, with air between the beats ---- */
+.day-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 2px 0 16px;
+}
+.day-where { font-size: 12px; color: var(--text-faint); }
+.day-jump {
+  background: none;
+  border: none;
+  padding: 8px 4px;
+  min-height: 44px;
+  color: var(--accent);
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.day-jump:hover { text-decoration: underline; }
+#panel-cycle .quote-card { margin-top: 16px; }
+#panel-cycle .practice-picker { margin-top: 18px; }
+
+/* ---- "Note how it felt" — the somatic half, folded until asked ---- */
+.practice-note {
+  margin-top: 14px;
+  border-top: 1px solid var(--border);
+  padding-top: 2px;
+}
+.practice-note > summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 12px 0;
+  min-height: 44px;
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+.practice-note > summary::-webkit-details-marker { display: none; }
+.practice-note > summary::before { content: "＋ "; color: var(--text-faint); }
+.practice-note[open] > summary::before { content: "－ "; }
+.practice-note .practice-then-text {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--text-dim);
+  margin: 0 0 8px;
+}
+
+/* ---- the "land" beat: an optional paced breath, then a quiet close ---- */
+.land { margin-top: 22px; text-align: center; }
+.land-breath {
+  width: 60px;
+  height: 60px;
+  margin: 4px auto 12px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(139, 124, 246, 0.38), transparent 70%);
+  animation: land-breathe 9s ease-in-out infinite;
+}
+@keyframes land-breathe {
+  0%, 100% { transform: scale(0.68); opacity: 0.5; }
+  50%      { transform: scale(1.15); opacity: 1; }
+}
+.land-cue { font-size: 12.5px; color: var(--text-dim); line-height: 1.5; margin: 0 0 16px; }
+.land .primary-btn { margin-top: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .land-breath { animation: none; transform: scale(1); opacity: 0.75; }
+}
+.day-settled { text-align: center; padding: 26px 0 8px; }
+.day-settled-mark { font-size: 24px; color: var(--green); line-height: 1; }
+.day-settled-text { font-size: 13.5px; color: var(--text); margin: 10px 0 0; }
+
+/* ---- roomier tap targets on touch, without ballooning the day card ---- */
+@media (pointer: coarse) {
+  .practice-grid { gap: 8px; }
+  .practice-chip { min-height: 40px; padding-top: 9px; padding-bottom: 9px; }
+  .horary-pick { min-height: 40px; }
+  .thought-del { min-height: 32px; min-width: 32px; }
+}
